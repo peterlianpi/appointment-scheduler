@@ -1,8 +1,41 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
+// Prisma Schema for Appointment Scheduler
+// ==========================================
+// This schema defines the complete database structure for the appointment
+// scheduling system with Better Auth integration, role-based access control,
+// and comprehensive audit logging.
 
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ==========================================
+// ENUMS
+// ==========================================
+
+// User role enum for RBAC
+enum UserRole {
+  USER
+  ADMIN
+}
+
+// Appointment status enum
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+// Audit action types
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  VIEW
+  CANCEL
+  COMPLETE
+  RESCHEDULE
+}
+
+// ==========================================
+// GENERATOR & DATASOURCE
+// ==========================================
 
 generator client {
   provider = "prisma-client"
@@ -13,20 +46,143 @@ datasource db {
   provider = "postgresql"
 }
 
+// ==========================================
+// USER MODEL (Extended with Role)
+// ==========================================
+
 model User {
-  id            String    @id
+  // Better Auth fields
+  id            String   @id
   name          String
   email         String
-  emailVerified Boolean   @default(false)
+  emailVerified Boolean  @default(false)
   image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Role-based access control
+  role UserRole @default(USER)
+
+  // Soft delete support
+  deletedAt DateTime?
+
+  // Relationships
   sessions      Session[]
   accounts      Account[]
+  appointments  Appointment[]  @relation("UserAppointments")
+  auditLogs     AuditLog[]     @relation("AuditLogsCreated")
+  notifications Notification[]
 
+  // Indexes
   @@unique([email])
+  @@index([email, deletedAt])
+  @@index([role])
+  @@index([createdAt])
   @@map("user")
 }
+
+// ==========================================
+// APPOINTMENT MODEL
+// ==========================================
+
+model Appointment {
+  // Primary identifier
+  id String @id @default(cuid())
+
+  // Core appointment details
+  title       String
+  description String?
+
+  // Scheduling
+  startDateTime DateTime
+  endDateTime   DateTime
+  duration      Int // Duration in minutes
+
+  // Status tracking
+  status AppointmentStatus @default(SCHEDULED)
+
+  // Location and meeting info
+  location   String?
+  meetingUrl String?
+
+  // Reminder and notification flags
+  emailNotificationSent Boolean   @default(false)
+  reminderSent          Boolean   @default(false)
+  reminderSentAt        DateTime?
+
+  // Cancellation details
+  cancelledAt  DateTime?
+  cancelReason String?
+
+  // Soft delete
+  deletedAt DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Owner relationship
+  userId String
+  user   User   @relation("UserAppointments", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Audit relationship
+  auditLogs AuditLog[]
+
+  // Indexes for common queries
+  @@index([userId])
+  @@index([userId, status])
+  @@index([userId, startDateTime])
+  @@index([startDateTime])
+  @@index([status])
+  @@index([emailNotificationSent])
+  @@index([reminderSent])
+  @@map("appointment")
+}
+
+// ==========================================
+// AUDIT LOG MODEL
+// ==========================================
+
+model AuditLog {
+  // Primary identifier
+  id String @id @default(cuid())
+
+  // Action tracking
+  action     AuditAction
+  entityType String // e.g., "Appointment", "User"
+  entityId   String
+
+  // Changes tracking (JSON field for flexibility)
+  oldValues Json?
+  newValues Json?
+
+  // Additional context
+  ipAddress String?
+  userAgent String?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // Actor relationship (who performed the action)
+  createdById String?
+  createdBy   User?   @relation("AuditLogsCreated", fields: [createdById], references: [id])
+
+  // Related entity (optional - for direct relationship)
+  appointmentId String?
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  // Indexes for audit queries
+  @@index([entityType, entityId])
+  @@index([createdById])
+  @@index([action])
+  @@index([createdAt])
+  @@index([entityType, action])
+  @@map("audit_log")
+}
+
+// ==========================================
+// BETTER AUTH MODELS (Existing)
+// ==========================================
 
 model Session {
   id        String   @id
@@ -74,4 +230,39 @@ model Verification {
 
   @@index([identifier])
   @@map("verification")
+}
+
+// ==========================================
+// NOTIFICATION MODEL
+// ==========================================
+
+model Notification {
+  // Primary identifier
+  id String @id @default(cuid())
+
+  // Notification content
+  title       String
+  description String
+  type        String // e.g., "appointment", "reminder", "system"
+
+  // Related entity
+  entityType String?
+  entityId   String?
+
+  // Status
+  read   Boolean   @default(false)
+  readAt DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+
+  // User relationship
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId])
+  @@index([userId, read])
+  @@index([createdAt])
+  @@map("notification")
 }

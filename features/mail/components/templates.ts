@@ -293,3 +293,310 @@ export function generateTwoFactorOtpEmail({
     `,
   };
 }
+
+// ============================================
+// APPOINTMENT EMAIL TEMPLATES
+// ============================================
+
+export interface AppointmentEmailData {
+  name: string;
+  email: string;
+  title: string;
+  description?: string;
+  startDateTime: Date;
+  endDateTime: Date;
+  duration: number;
+  location?: string;
+  meetingUrl?: string;
+}
+
+function formatDateTime(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatTime(date: Date): string {
+  return date.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  });
+}
+
+function formatDate(date: Date): string {
+  return date.toLocaleDateString("en-US", {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+// Appointment email styles (inline for email compatibility)
+const appointmentStyles = `
+  .appointment-card { background: #f8fafc; border-radius: 12px; padding: 24px; margin: 24px 0; border-left: 4px solid #667eea; }
+  .appointment-title { font-size: 20px; font-weight: 600; color: #1a1a1a; margin-bottom: 16px; }
+  .appointment-detail { display: flex; align-items: center; margin-bottom: 12px; }
+  .appointment-detail-icon { width: 24px; margin-right: 12px; font-size: 16px; }
+  .appointment-detail-text { font-size: 15px; color: #475569; }
+  .appointment-description { background: #ffffff; border-radius: 8px; padding: 16px; margin-top: 16px; font-size: 14px; color: #64748b; border: 1px solid #e2e8f0; }
+  .appointment-buttons { text-align: center; margin: 32px 0; }
+  .appointment-button { display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 0 8px; }
+  .status-badge { display: inline-block; padding: 4px 12px; background: #dbeafe; color: #1e40af; border-radius: 20px; font-size: 12px; font-weight: 600; }
+`;
+
+// Appointment Confirmation Email
+export function generateAppointmentConfirmationEmail(data: AppointmentEmailData) {
+  const appUrl = getAppUrl();
+  const appName = getAppName();
+
+  const content = `
+    <h2>Appointment Confirmed! ✅</h2>
+    <p>Hi ${data.name},</p>
+    <p>Your appointment has been successfully scheduled. Here are the details:</p>
+
+    <div class="appointment-card">
+      <div class="appointment-title">${data.title}</div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📅</span>
+        <span class="appointment-detail-text"><strong>${formatDateTime(data.startDateTime)}</strong></span>
+      </div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">⏱️</span>
+        <span class="appointment-detail-text">${data.duration} minutes (${formatTime(data.startDateTime)} - ${formatTime(data.endDateTime)})</span>
+      </div>
+      ${data.location ? `
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📍</span>
+        <span class="appointment-detail-text">${data.location}</span>
+      </div>
+      ` : ""}
+      ${data.meetingUrl ? `
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">🔗</span>
+        <span class="appointment-detail-text"><a href="${data.meetingUrl}" style="color: #667eea;">Join Meeting</a></span>
+      </div>
+      ` : ""}
+      ${data.description ? `
+      <div class="appointment-description">
+        <strong>Description:</strong><br>
+        ${data.description}
+      </div>
+      ` : ""}
+    </div>
+
+    <div class="appointment-buttons">
+      <a href="${appUrl}/dashboard" class="appointment-button">View in Dashboard</a>
+    </div>
+
+    <div class="warning">
+      <p><strong>Reminder:</strong> You'll receive a reminder email 24 hours before your appointment.</p>
+    </div>
+
+    <p style="color: #64748b; font-size: 14px;">
+      Need to reschedule or cancel? Visit your dashboard to manage your appointment.
+    </p>
+  `;
+
+  return createEmailTemplate(
+    "Appointment Confirmed",
+    "📅",
+    content,
+    `Appointment Confirmed: ${data.title} on ${formatDate(data.startDateTime)}`,
+    `This email was sent to ${data.email}`,
+  );
+}
+
+// Appointment Reminder Email
+export function generateAppointmentReminderEmail(data: AppointmentEmailData) {
+  const appUrl = getAppUrl();
+  const appName = getAppName();
+
+  // Calculate hours until appointment
+  const hoursUntil = Math.round(
+    (data.startDateTime.getTime() - Date.now()) / (1000 * 60 * 60),
+  );
+
+  const content = `
+    <h2>Appointment Reminder ⏰</h2>
+    <p>Hi ${data.name},</p>
+    <p>You have an appointment coming up in <strong>${hoursUntil} hours</strong>!</p>
+
+    <div class="appointment-card">
+      <div class="appointment-title">${data.title}</div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📅</span>
+        <span class="appointment-detail-text"><strong>${formatDateTime(data.startDateTime)}</strong></span>
+      </div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">⏱️</span>
+        <span class="appointment-detail-text">${data.duration} minutes (${formatTime(data.startDateTime)} - ${formatTime(data.endDateTime)})</span>
+      </div>
+      ${data.location ? `
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📍</span>
+        <span class="appointment-detail-text">${data.location}</span>
+      </div>
+      ` : ""}
+      ${data.meetingUrl ? `
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">🔗</span>
+        <span class="appointment-detail-text"><a href="${data.meetingUrl}" style="color: #667eea;">Join Meeting</a></span>
+      </div>
+      ` : ""}
+      ${data.description ? `
+      <div class="appointment-description">
+        <strong>Description:</strong><br>
+        ${data.description}
+      </div>
+      ` : ""}
+    </div>
+
+    <div class="appointment-buttons">
+      <a href="${appUrl}/dashboard" class="appointment-button">View Details</a>
+    </div>
+
+    <div class="warning">
+      <p><strong>Important:</strong> Please ensure you're available at the scheduled time. If you need to reschedule, do so as soon as possible.</p>
+    </div>
+  `;
+
+  return createEmailTemplate(
+    "Appointment Reminder",
+    "⏰",
+    content,
+    `Reminder: ${data.title} tomorrow at ${formatTime(data.startDateTime)}`,
+    `This email was sent to ${data.email}`,
+  );
+}
+
+// Appointment Rescheduled Email
+export function generateAppointmentRescheduledEmail(
+  data: AppointmentEmailData & { oldStartDateTime?: Date; oldEndDateTime?: Date },
+) {
+  const appUrl = getAppUrl();
+  const appName = getAppName();
+
+  const oldDateText = data.oldStartDateTime
+    ? formatDateTime(data.oldStartDateTime)
+    : "the original time";
+
+  const content = `
+    <h2>Appointment Rescheduled 🔄</h2>
+    <p>Hi ${data.name},</p>
+    <p>Your appointment has been rescheduled from <strong>${oldDateText}</strong> to:</p>
+
+    <div class="appointment-card">
+      <div class="appointment-title">${data.title}</div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📅</span>
+        <span class="appointment-detail-text"><strong>${formatDateTime(data.startDateTime)}</strong></span>
+      </div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">⏱️</span>
+        <span class="appointment-detail-text">${data.duration} minutes (${formatTime(data.startDateTime)} - ${formatTime(data.endDateTime)})</span>
+      </div>
+      ${data.location ? `
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📍</span>
+        <span class="appointment-detail-text">${data.location}</span>
+      </div>
+      ` : ""}
+      ${data.meetingUrl ? `
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">🔗</span>
+        <span class="appointment-detail-text"><a href="${data.meetingUrl}" style="color: #667eea;">Join Meeting</a></span>
+      </div>
+      ` : ""}
+      ${data.description ? `
+      <div class="appointment-description">
+        <strong>Description:</strong><br>
+        ${data.description}
+      </div>
+      ` : ""}
+    </div>
+
+    <div class="appointment-buttons">
+      <a href="${appUrl}/dashboard" class="appointment-button">View Updated Appointment</a>
+    </div>
+
+    <div class="warning">
+      <p><strong>Note:</strong> If you didn't request this change, please contact the organizer immediately.</p>
+    </div>
+  `;
+
+  return createEmailTemplate(
+    "Appointment Rescheduled",
+    "🔄",
+    content,
+    `Appointment Rescheduled: ${data.title} on ${formatDate(data.startDateTime)}`,
+    `This email was sent to ${data.email}`,
+  );
+}
+
+// Appointment Cancelled Email
+export function generateAppointmentCancelledEmail(data: AppointmentEmailData & { cancelReason?: string }) {
+  const appUrl = getAppUrl();
+  const appName = getAppName();
+
+  const content = `
+    <h2>Appointment Cancelled ❌</h2>
+    <p>Hi ${data.name},</p>
+    <p>Your appointment has been cancelled. Here are the details:</p>
+
+    <div class="appointment-card">
+      <div class="appointment-title">${data.title}</div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📅</span>
+        <span class="appointment-detail-text">${formatDateTime(data.startDateTime)}</span>
+      </div>
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">⏱️</span>
+        <span class="appointment-detail-text">${data.duration} minutes</span>
+      </div>
+      ${data.location ? `
+      <div class="appointment-detail">
+        <span class="appointment-detail-icon">📍</span>
+        <span class="appointment-detail-text">${data.location}</span>
+      </div>
+      ` : ""}
+    </div>
+
+    ${data.cancelReason ? `
+    <div class="warning" style="background: #fef2f2; border-color: #ef4444;">
+      <p style="color: #991b1b;"><strong>Cancellation Reason:</strong> ${data.cancelReason}</p>
+    </div>
+    ` : ""}
+
+    <div class="appointment-buttons">
+      <a href="${appUrl}/dashboard" class="appointment-button">Book New Appointment</a>
+    </div>
+
+    <p style="color: #64748b; font-size: 14px;">
+      If you believe this was a mistake or you'd like to reschedule, please visit your dashboard.
+    </p>
+  `;
+
+  return createEmailTemplate(
+    "Appointment Cancelled",
+    "❌",
+    content,
+    `Appointment Cancelled: ${data.title}`,
+    `This email was sent to ${data.email}`,
+  );
+}
+
+// Export all appointment templates as an object
+export const appointmentEmailTemplates = {
+  confirmation: generateAppointmentConfirmationEmail,
+  reminder: generateAppointmentReminderEmail,
+  rescheduled: generateAppointmentRescheduledEmail,
+  cancelled: generateAppointmentCancelledEmail,
+};
