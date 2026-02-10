@@ -266,3 +266,30 @@ model Notification {
   @@index([createdAt])
   @@map("notification")
 }
+
+// ==========================================
+// RATE LIMIT MODEL (Added for Better Auth database storage)
+// ==========================================
+
+model RateLimit {
+  /// Primary identifier for the rate limit entry
+  id String @id @default(cuid())
+
+  /// Unique identifier for each rate limit key (e.g., "login:${ip}")
+  key String @unique
+
+  /// Number of requests made in the current window
+  count Int @default(0)
+
+  /// When the current window resets (Unix timestamp in seconds)
+  resetAt DateTime @default(now())
+
+  /// Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  /// Indexes
+  @@index([key])
+  @@index([resetAt])
+  @@map("rate_limit")
+}

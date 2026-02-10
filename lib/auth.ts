@@ -31,8 +31,23 @@ async function sendTwoFactorOtpEmail(
 
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
-    provider: "postgresql", // or "mysql", "postgresql", ...etc
+    provider: "postgresql",
   }),
+  rateLimit: {
+    enabled: process.env.NODE_ENV === "production",
+    window: 60, // 60 seconds
+    max: 100,
+    storage: "database",
+    customRules: {
+      "/sign-in/email": { window: 15 * 60, max: 5 },
+      "/reset-password": { window: 60 * 60, max: 3 },
+    },
+  },
+  advanced: {
+    ipAddress: {
+      ipv6Subnet: 64,
+    },
+  },
   emailAndPassword: {
     enabled: true,
     autoSignIn: false, //defaults to true

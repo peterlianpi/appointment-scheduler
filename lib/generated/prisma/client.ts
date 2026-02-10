@@ -74,3 +74,8 @@ export type Verification = Prisma.VerificationModel
  * 
  */
 export type Notification = Prisma.NotificationModel
+/**
+ * Model RateLimit
+ * 
+ */
+export type RateLimit = Prisma.RateLimitModel

@@ -1,8 +1,14 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Clock, MapPin, Video } from "lucide-react";
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  MapPin,
+  Video,
+  X,
+} from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -103,9 +109,13 @@ export function AppointmentForm({
   const startDateTime = watch("startDateTime");
   const endDateTime = watch("endDateTime");
 
-  // Reset form when appointment changes
+  // Track if we were editing to handle reset properly
+  const wasEditing = useRef(false);
+
+  // Reset form when appointment changes or dialog opens with new appointment
   useEffect(() => {
     if (appointment) {
+      wasEditing.current = true;
       reset({
         title: appointment.title,
         description: appointment.description || "",
@@ -115,7 +125,9 @@ export function AppointmentForm({
         meetingUrl: appointment.meetingUrl || "",
         emailNotification: appointment.emailNotificationSent,
       });
-    } else {
+    } else if (wasEditing.current) {
+      // Only reset if we were previously editing (prevents reset on initial mount)
+      wasEditing.current = false;
       reset({
         title: "",
         description: "",
@@ -174,10 +186,17 @@ export function AppointmentForm({
       const time = startDateTime ? new Date(startDateTime) : new Date();
       date.setHours(time.getHours(), time.getMinutes());
       setValue("startDateTime", date.toISOString());
+    } else {
+      setValue("startDateTime", "");
     }
   };
 
-  const handleStartTimeChange = (hours: number, minutes: number) => {
+  const handleStartTimeChange = (
+    e: React.MouseEvent,
+    hours: number,
+    minutes: number,
+  ) => {
+    e.preventDefault();
     const current = startDateTime ? new Date(startDateTime) : new Date();
     current.setHours(hours, minutes);
     setValue("startDateTime", current.toISOString());
@@ -188,10 +207,17 @@ export function AppointmentForm({
       const time = endDateTime ? new Date(endDateTime) : new Date();
       date.setHours(time.getHours(), time.getMinutes());
       setValue("endDateTime", date.toISOString());
+    } else {
+      setValue("endDateTime", "");
     }
   };
 
-  const handleEndTimeChange = (hours: number, minutes: number) => {
+  const handleEndTimeChange = (
+    e: React.MouseEvent,
+    hours: number,
+    minutes: number,
+  ) => {
+    e.preventDefault();
     const current = endDateTime ? new Date(endDateTime) : new Date();
     current.setHours(hours, minutes);
     setValue("endDateTime", current.toISOString());
@@ -211,19 +237,22 @@ export function AppointmentForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
+      <DialogContent className="w-full max-h-[90vh] overflow-y-auto">
+        <DialogHeader className="relative pr-10">
+          <DialogTitle className="text-lg sm:text-xl">
             {isEditing ? "Edit Appointment" : "Create Appointment"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {isEditing
               ? "Update the appointment details below."
               : "Fill in the details to create a new appointment."}
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <FieldGroup>
+        <form
+          onSubmit={handleSubmit(onSubmit)}
+          className="space-y-4"
+        >
+          <FieldGroup className="space-y-4">
             <Controller
               name="title"
               control={control}
@@ -236,6 +265,7 @@ export function AppointmentForm({
                     placeholder="Meeting with John"
                     disabled={isPending}
                     aria-invalid={fieldState.invalid}
+                    className="h-11 sm:h-10"
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -254,24 +284,28 @@ export function AppointmentForm({
                     id={field.name}
                     placeholder="Meeting notes or agenda..."
                     disabled={isPending}
+                    className="min-h-20 sm:min-h-25"
                   />
                 </Field>
               )}
             />
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div
+              className="grid grid-cols-1 gap-4 w-full
+             "
+            >
               <Controller
                 name="startDateTime"
                 control={control}
                 render={({ fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>Start Date & Time</FieldLabel>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full justify-start text-left font-normal",
+                              "w-full justify-start text-left font-normal h-11 sm:h-10",
                               !startDateTime && "text-muted-foreground",
                             )}
                           >
@@ -283,7 +317,7 @@ export function AppointmentForm({
                             )}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
+                        <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={
@@ -292,26 +326,30 @@ export function AppointmentForm({
                                 : undefined
                             }
                             onSelect={handleStartDateSelect}
-                            initialFocus
+                            autoFocus
                           />
                         </PopoverContent>
                       </Popover>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-[80px]">
+                          <Button
+                            variant="outline"
+                            className="w-full sm:w-20 h-11 sm:h-10"
+                          >
                             <Clock className="h-4 w-4" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="p-0">
-                          <div className="grid grid-cols-4 gap-1 p-2 max-h-[200px] overflow-y-auto">
+                        <PopoverContent className="p-0" align="start">
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 p-2 max-h-50 overflow-y-auto">
                             {timeSlots.map((slot) => (
                               <Button
                                 key={`${slot.hours}-${slot.minutes}`}
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs"
-                                onClick={() =>
+                                className="text-xs h-9 sm:h-8"
+                                onClick={(e) =>
                                   handleStartTimeChange(
+                                    e,
                                     slot.hours,
                                     slot.minutes,
                                   )
@@ -345,13 +383,13 @@ export function AppointmentForm({
                 render={({ fieldState }) => (
                   <Field data-invalid={fieldState.invalid}>
                     <FieldLabel>End Date & Time</FieldLabel>
-                    <div className="flex gap-2">
+                    <div className="flex flex-col gap-2">
                       <Popover>
                         <PopoverTrigger asChild>
                           <Button
                             variant="outline"
                             className={cn(
-                              "w-full justify-start text-left font-normal",
+                              "w-full justify-start text-left font-normal h-11 sm:h-10",
                               !endDateTime && "text-muted-foreground",
                             )}
                           >
@@ -363,33 +401,40 @@ export function AppointmentForm({
                             )}
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
+                        <PopoverContent className="w-auto p-0" align="start">
                           <Calendar
                             mode="single"
                             selected={
                               endDateTime ? new Date(endDateTime) : undefined
                             }
                             onSelect={handleEndDateSelect}
-                            initialFocus
+                            autoFocus
                           />
                         </PopoverContent>
                       </Popover>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-[80px]">
+                          <Button
+                            variant="outline"
+                            className="w-full sm:w-20 h-11 sm:h-10"
+                          >
                             <Clock className="h-4 w-4" />
                           </Button>
                         </PopoverTrigger>
-                        <PopoverContent className="p-0">
-                          <div className="grid grid-cols-4 gap-1 p-2 max-h-[200px] overflow-y-auto">
+                        <PopoverContent className="p-0" align="start">
+                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-1 p-2 max-h-50 overflow-y-auto">
                             {timeSlots.map((slot) => (
                               <Button
                                 key={`${slot.hours}-${slot.minutes}`}
                                 variant="ghost"
                                 size="sm"
-                                className="text-xs"
-                                onClick={() =>
-                                  handleEndTimeChange(slot.hours, slot.minutes)
+                                className="text-xs h-9 sm:h-8"
+                                onClick={(e) =>
+                                  handleEndTimeChange(
+                                    e,
+                                    slot.hours,
+                                    slot.minutes,
+                                  )
                                 }
                               >
                                 {format(
@@ -427,7 +472,7 @@ export function AppointmentForm({
                       {...field}
                       id={field.name}
                       placeholder="123 Main St, City"
-                      className="pl-9"
+                      className="pl-9 h-11 sm:h-10"
                       disabled={isPending}
                     />
                   </div>
@@ -448,7 +493,7 @@ export function AppointmentForm({
                       {...field}
                       id={field.name}
                       placeholder="https://zoom.us/j/123456789"
-                      className="pl-9"
+                      className="pl-9 h-11 sm:h-10"
                       disabled={isPending}
                       aria-invalid={fieldState.invalid}
                     />
@@ -467,12 +512,12 @@ export function AppointmentForm({
               control={control}
               render={({ field }) => (
                 <Field>
-                  <div className="flex flex-row items-center justify-between rounded-lg border p-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border p-4 gap-3">
                     <div className="space-y-0.5">
                       <FieldLabel className="text-base">
                         Email Notification
                       </FieldLabel>
-                      <FieldDescription>
+                      <FieldDescription className="text-sm">
                         Receive an email confirmation for this appointment
                       </FieldDescription>
                     </div>
@@ -485,15 +530,20 @@ export function AppointmentForm({
               )}
             />
           </FieldGroup>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              className="w-full sm:w-auto h-11 sm:h-10"
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending}>
+            <Button
+              type="submit"
+              disabled={isPending}
+              className="w-full sm:w-auto h-11 sm:h-10"
+            >
               {isPending
                 ? isEditing
                   ? "Updating..."

@@ -81,9 +81,9 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
         return;
       }
 
-      toast.success("Account created successfully!");
-      router.push("/dashboard");
-      router.refresh();
+      // Show success message and redirect to verification pending page
+      toast.success("Account created! Please check your email to verify your account.");
+      router.push("/verification-pending");
     } catch {
       setError("root", { message: "An unexpected error occurred" });
       toast.error("An unexpected error occurred");

@@ -52,6 +52,13 @@ interface AppointmentListProps {
   onView?: (appointment: Appointment) => void;
   showFilters?: boolean;
   userId?: string;
+  // Controlled state props
+  status?: AppointmentStatus | "all";
+  page?: number;
+  search?: string;
+  onStatusChange?: (status: AppointmentStatus | "all") => void;
+  onPageChange?: (page: number) => void;
+  onSearchChange?: (search: string) => void;
 }
 
 const statusColors: Record<AppointmentStatus, string> = {
@@ -68,11 +75,62 @@ export function AppointmentList({
   onView,
   showFilters = true,
   userId,
+  status: controlledStatus,
+  page: controlledPage,
+  search: controlledSearch,
+  onStatusChange,
+  onPageChange,
+  onSearchChange,
 }: AppointmentListProps) {
-  const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
-  const [status, setStatus] = useState<AppointmentStatus | "all">("all");
-  const [search, setSearch] = useState("");
+  // Use controlled state if provided, otherwise use internal state
+  const [internalStatus, setInternalStatus] = useState<
+    AppointmentStatus | "all"
+  >("all");
+  const [internalPage, setInternalPage] = useState(1);
+  const [internalSearch, setInternalSearch] = useState("");
+
+  const status =
+    controlledStatus !== undefined ? controlledStatus : internalStatus;
+  const page = controlledPage !== undefined ? controlledPage : internalPage;
+  const search =
+    controlledSearch !== undefined ? controlledSearch : internalSearch;
+  const limit = 10;
+
+  const setStatus = (value: AppointmentStatus | "all") => {
+    if (onStatusChange) {
+      onStatusChange(value);
+    } else {
+      setInternalStatus(value);
+    }
+    // Reset page when status changes
+    if (onPageChange) {
+      onPageChange(1);
+    } else {
+      setInternalPage(1);
+    }
+  };
+
+  const setPageValue = (newPage: number) => {
+    if (onPageChange) {
+      onPageChange(newPage);
+    } else {
+      setInternalPage(newPage);
+    }
+  };
+
+  const setSearchValue = (value: string) => {
+    if (onSearchChange) {
+      onSearchChange(value);
+    } else {
+      setInternalSearch(value);
+    }
+    // Reset page when search changes
+    if (onPageChange) {
+      onPageChange(1);
+    } else {
+      setInternalPage(1);
+    }
+  };
 
   const { data, isLoading, error, refetch } = useAppointments({
     page,
@@ -125,8 +183,7 @@ export function AppointmentList({
               placeholder="Search appointments..."
               value={search}
               onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
+                setSearchValue(e.target.value);
               }}
               className="pl-9"
             />
@@ -137,7 +194,6 @@ export function AppointmentList({
               value={status}
               onValueChange={(value: AppointmentStatus | "all") => {
                 setStatus(value);
-                setPage(1);
               }}
             >
               <SelectTrigger className="w-[180px]">
@@ -329,7 +385,7 @@ export function AppointmentList({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  onClick={() => setPageValue(Math.max(1, page - 1))}
                   disabled={page === 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -344,7 +400,7 @@ export function AppointmentList({
                         variant={page === pageNum ? "default" : "outline"}
                         size="sm"
                         className="h-8 w-8 p-0"
-                        onClick={() => setPage(pageNum)}
+                        onClick={() => setPageValue(pageNum)}
                       >
                         {pageNum}
                       </Button>
@@ -354,7 +410,7 @@ export function AppointmentList({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  onClick={() => setPageValue(Math.min(totalPages, page + 1))}
                   disabled={page === totalPages}
                 >
                   Next

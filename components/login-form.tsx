@@ -68,8 +68,20 @@ export function LoginForm({
       });
 
       if (error) {
-        setError("root", { message: error.message || "Failed to login" });
-        toast.error(error.message || "Failed to login");
+        // Check if this is an email verification error
+        if (
+          error.status === 403 ||
+          error.message?.toLowerCase().includes("verify")
+        ) {
+          setError("root", {
+            message:
+              "Please verify your email address before logging in. Check your email for the verification link.",
+          });
+          toast.error("Email verification required");
+        } else {
+          setError("root", { message: error.message || "Failed to login" });
+          toast.error(error.message || "Failed to login");
+        }
         return;
       }
 
@@ -147,9 +159,26 @@ export function LoginForm({
                 )}
               />
               {form.formState.errors.root && (
-                <p className="text-sm text-red-500">
-                  {form.formState.errors.root.message}
-                </p>
+                <div className="space-y-2">
+                  <p className="text-sm text-red-500">
+                    {form.formState.errors.root.message}
+                  </p>
+                  {(form.formState.errors.root.message
+                    ?.toLowerCase()
+                    .includes("verify") ||
+                    form.formState.errors.root.message
+                      ?.toLowerCase()
+                      .includes("email")) && (
+                    <p className="text-sm text-blue-600">
+                      <a
+                        href="/verification-pending"
+                        className="underline underline-offset-4 hover:text-blue-800"
+                      >
+                        Click here to resend verification email
+                      </a>
+                    </p>
+                  )}
+                </div>
               )}
               <Field>
                 <Button type="submit" disabled={isLoading}>
