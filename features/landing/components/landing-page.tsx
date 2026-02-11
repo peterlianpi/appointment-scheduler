@@ -350,18 +350,22 @@ export function LandingPage() {
             <Calendar className="h-6 w-6" />
             <span>Appointment Scheduler</span>
           </Link>
-           <ModeToggle />
-          <nav className="hidden md:flex items-center gap-6">
-            <Link
-              href="/login"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Sign In
-            </Link>
-            <Button asChild>
-              <Link href="/signup">Get Started</Link>
-            </Button>
-          </nav>
+          <div className="flex gap-6">
+            <ModeToggle />
+            <nav className="hidden md:flex items-center gap-6">
+              <Button variant="outline" asChild>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Sign In
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/signup">Get Started</Link>
+              </Button>
+            </nav>
+          </div>
         </div>
       </header>
 
