@@ -4,10 +4,6 @@ export const config: VercelConfig = {
   crons: [
     {
       path: "/api/cron/reminders",
-      schedule: "*/5 * * * *",
-    },
-    {
-      path: "/api/cron/reminders",
       schedule: "0 * * * *",
     },
   ],

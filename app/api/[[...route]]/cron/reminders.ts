@@ -17,16 +17,19 @@ import { sendBulkReminders } from "@/features/mail/lib/appointment";
  * - CRON_SECRET: Optional secret key for cron job authentication
  * - TEST_SEND_TO_MAIL: If set, sends all reminders to this email (test mode)
  * - TEST_CRON_INTERVAL_MINUTES: If set, uses this interval in minutes for testing (default: 5)
+ * - ENABLE_CRON_SECRET_CHECK: Set to "true" to enable secret validation (default: false)
  */
 
 const app = new Hono()
 
   .get("/", async (c) => {
-    // Verify cron secret if configured
+    // Check if secret validation is enabled
+    const enableSecretCheck = process.env.ENABLE_CRON_SECRET_CHECK === "true";
     const cronSecret = process.env.CRON_SECRET;
     const requestSecret = c.req.header("x-cron-secret");
 
-    if (cronSecret && requestSecret !== cronSecret) {
+    // Only validate secret if check is enabled and secret is configured
+    if (enableSecretCheck && cronSecret && requestSecret !== cronSecret) {
       console.warn("[Cron] Unauthorized reminder job attempt");
       return c.json(
         {

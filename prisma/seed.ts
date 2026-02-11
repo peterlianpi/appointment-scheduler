@@ -230,6 +230,8 @@ export async function main() {
 
   // Create appointments at different intervals for testing
   const cronIntervals = [
+    { days: 0, hours: 0, minutes: 2, label: "2 minutes from now (test mode)" },
+    { days: 0, hours: 0, minutes: 5, label: "5 minutes from now (test mode)" },
     { days: 0, hours: 2, label: "2 hours from now" },
     { days: 0, hours: 6, label: "6 hours from now" },
     { days: 0, hours: 12, label: "12 hours from now" },
@@ -248,10 +250,36 @@ export async function main() {
   for (let userIdx = 0; userIdx < Math.min(5, users.length); userIdx++) {
     const testUserId = users[userIdx];
     for (const interval of cronIntervals) {
-      const appointmentData = generateCronTestAppointment(testUserId, interval.days, interval.hours);
+      const { days, hours, minutes = 0 } = interval;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() + days);
+      startDate.setHours(
+        startDate.getHours() + hours,
+        startDate.getMinutes() + minutes,
+        0,
+        0,
+      );
+
+      const duration = randomInt(30, 120);
+      const endDate = new Date(startDate);
+      endDate.setMinutes(endDate.getMinutes() + duration);
+
       await prisma.appointment.create({
         data: {
-          ...appointmentData,
+          title: `[CRON TEST] ${randomElement(APPOINTMENT_TITLES)}`,
+          description: `Test appointment for cron job - ${days} days, ${hours} hours, ${minutes} minutes from now`,
+          startDateTime: startDate,
+          endDateTime: endDate,
+          duration,
+          status: "SCHEDULED" as const,
+          location: randomElement(LOCATION_TYPES),
+          meetingUrl:
+            Math.random() > 0.5
+              ? `https://meet.example.com/cron-test-${Date.now()}`
+              : null,
+          emailNotificationSent: false,
+          reminderSent: false,
+          reminderSentAt: null,
           userId: testUserId,
         },
       });
@@ -278,9 +306,15 @@ export async function main() {
         ),
         endDateTime: new Date(),
         duration: randomInt(30, 120),
-        status: randomElement(["SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]),
+        status: randomElement([
+          "SCHEDULED",
+          "COMPLETED",
+          "CANCELLED",
+          "NO_SHOW",
+        ]),
         location: randomElement(LOCATION_TYPES),
-        meetingUrl: Math.random() > 0.5 ? `https://meet.example.com/${i}` : null,
+        meetingUrl:
+          Math.random() > 0.5 ? `https://meet.example.com/${i}` : null,
         emailNotificationSent: Math.random() > 0.5,
         reminderSent: Math.random() > 0.5,
         reminderSentAt: randomDate(new Date(2024, 0, 1), new Date()),
@@ -363,7 +397,9 @@ export async function main() {
   console.log("🎉 Seed completed successfully!");
   console.log("=".repeat(50));
   console.log(`📊 Total records created:`);
-  console.log(`   - Users: ${allUserIds.length} (${admins.length} admins, ${users.length} regular)`);
+  console.log(
+    `   - Users: ${allUserIds.length} (${admins.length} admins, ${users.length} regular)`,
+  );
   console.log(`   - Cron Test Appointments: ${cronAppointmentCount}`);
   console.log(`   - Random Appointments: ${randomCount}`);
   console.log(`   - Audit Logs: ${auditCount}`);
