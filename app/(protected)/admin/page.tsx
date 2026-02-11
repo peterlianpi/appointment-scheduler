@@ -1,17 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Plus,
-  Calendar,
-  Download,
-  Users,
-  Settings,
-} from "lucide-react";
+import { Plus, Calendar, Download, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { AppointmentList } from "@/components/appointment-list";
-import { AppointmentForm } from "@/components/appointment-form";
+import { AppointmentList } from "@/features/appointment/components/appointment-list";
+import { AppointmentForm } from "@/features/appointment/components/appointment-form";
 import { Appointment } from "@/hooks/use-appointments";
 
 export default function AdminPage() {

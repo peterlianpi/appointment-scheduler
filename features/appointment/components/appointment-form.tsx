@@ -248,10 +248,7 @@ export function AppointmentForm({
               : "Fill in the details to create a new appointment."}
           </DialogDescription>
         </DialogHeader>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="space-y-4"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <FieldGroup className="space-y-4">
             <Controller
               name="title"
@@ -498,9 +495,6 @@ export function AppointmentForm({
                       aria-invalid={fieldState.invalid}
                     />
                   </div>
-                  <FieldDescription>
-                    Enter a valid URL for video conferencing.
-                  </FieldDescription>
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
                   )}
@@ -512,45 +506,35 @@ export function AppointmentForm({
               control={control}
               render={({ field }) => (
                 <Field>
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between rounded-lg border p-4 gap-3">
-                    <div className="space-y-0.5">
-                      <FieldLabel className="text-base">
-                        Email Notification
-                      </FieldLabel>
-                      <FieldDescription className="text-sm">
-                        Receive an email confirmation for this appointment
-                      </FieldDescription>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <FieldLabel htmlFor={field.name}>
+                      Email Notification
+                    </FieldLabel>
                     <Switch
+                      id={field.name}
                       checked={field.value}
                       onCheckedChange={field.onChange}
+                      disabled={isPending}
                     />
                   </div>
+                  <FieldDescription>
+                    Send an email reminder to the attendee
+                  </FieldDescription>
                 </Field>
               )}
             />
           </FieldGroup>
-          <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <DialogFooter className="sm:justify-start gap-2">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="w-full sm:w-auto h-11 sm:h-10"
+              disabled={isPending}
             >
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isPending}
-              className="w-full sm:w-auto h-11 sm:h-10"
-            >
-              {isPending
-                ? isEditing
-                  ? "Updating..."
-                  : "Creating..."
-                : isEditing
-                  ? "Update"
-                  : "Create"}
+            <Button type="submit" disabled={isPending}>
+              {isPending ? "Saving..." : isEditing ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </form>

@@ -7,13 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AppointmentList } from "@/components/appointment-list";
+import { AppointmentList } from "@/features/appointment/components/appointment-list";
 import {
   Appointment,
   AppointmentStatus,
   useAppointments,
 } from "@/hooks/use-appointments";
-import { AppointmentDetail } from "@/components/appointment-detail";
+import { AppointmentDetail } from "@/features/appointment/components/appointment-detail";
 
 const statusTabs = [
   { value: "all", label: "All" },

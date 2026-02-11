@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppointmentForm } from "@/components/appointment-form";
+import { AppointmentForm } from "@/features/appointment/components/appointment-form";
 import { useAppointment } from "@/hooks/use-appointments";
 
 export default function AppointmentPage() {
