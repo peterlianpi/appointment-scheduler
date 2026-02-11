@@ -70,3 +70,56 @@ export interface AdminStatsResponse {
     completedAppointments: number;
   };
 }
+
+// ============================================
+// Landing Page Types
+// ============================================
+
+export interface LandingPageStats {
+  totalUsers: number;
+  totalAppointments: number;
+  upcomingAppointments: number;
+  completedAppointments: number;
+  satisfactionRate: number;
+}
+
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  content: string;
+  avatar?: string;
+  rating: number;
+}
+
+export interface Feature {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  highlight?: boolean;
+}
+
+export interface PricingPlan {
+  id: string;
+  name: string;
+  price: number;
+  interval: string;
+  description: string;
+  features: string[];
+  highlighted?: boolean;
+  ctaText: string;
+}
+
+export interface LandingPageData {
+  stats: LandingPageStats;
+  testimonials: Testimonial[];
+  features: Feature[];
+  pricingPlans: PricingPlan[];
+}
+
+export interface LandingPageResponse {
+  success: boolean;
+  data: LandingPageData;
+}
