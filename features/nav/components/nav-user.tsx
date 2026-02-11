@@ -1,22 +1,13 @@
 "use client";
 
-import {
-  BadgeCheck,
-  Bell,
-  ChevronsUpDown,
-  CreditCard,
-  LogOut,
-  Shield,
-  Sparkles,
-} from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ChevronsUpDown, LogOut, Shield } from "lucide-react";
+import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { authClient, useSession } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -38,6 +29,7 @@ interface User {
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoadingAdmin, setIsLoadingAdmin] = useState(true);
@@ -68,7 +60,7 @@ export function NavUser({ user }: { user: User }) {
     await authClient.signOut({
       fetchOptions: {
         onSuccess: () => {
-          router.push("/login");
+          router.push(`/login?callbackURL=${encodeURIComponent(pathname)}`);
           router.refresh();
         },
       },

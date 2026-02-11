@@ -97,13 +97,9 @@ function PasswordInput({
 // ============================================
 
 function ResetPasswordContent({
-  onSuccess,
-  onBackToLogin,
   themeClasses,
   className,
 }: {
-  onSuccess?: () => void;
-  onBackToLogin?: () => void;
   themeClasses?: string;
   className?: string;
 }) {
@@ -151,7 +147,6 @@ function ResetPasswordContent({
 
       setIsSuccess(true);
       toast.success("Password reset successfully!");
-      onSuccess?.();
     } catch {
       setError("root", { message: "An unexpected error occurred" });
       toast.error("An unexpected error occurred");
@@ -161,7 +156,6 @@ function ResetPasswordContent({
   };
 
   const handleBackToLoginClick = () => {
-    onBackToLogin?.();
     router.push("/login");
   };
 
@@ -251,8 +245,6 @@ function ResetPasswordContent({
 // ============================================
 
 export function ResetPasswordForm({
-  onSuccess,
-  onBackToLogin,
   theme = "light",
   className,
 }: ResetPasswordFormProps) {
@@ -279,12 +271,7 @@ export function ResetPasswordForm({
         </div>
       }
     >
-      <ResetPasswordContent
-        onSuccess={onSuccess}
-        onBackToLogin={onBackToLogin}
-        themeClasses={themeClasses}
-        className={className}
-      />
+      <ResetPasswordContent themeClasses={themeClasses} className={className} />
     </Suspense>
   );
 }

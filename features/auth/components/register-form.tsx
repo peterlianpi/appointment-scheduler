@@ -254,9 +254,6 @@ function PasswordInput({
 export function RegisterForm({
   defaultEmail = "",
   defaultName = "",
-  onSuccess,
-  onError,
-  onVerificationRequired,
   theme = "light",
   showLoginLink = true,
   className,
@@ -297,14 +294,10 @@ export function RegisterForm({
           message: error.message || "Failed to create account",
         });
         toast.error(error.message || "Failed to create account");
-        onError?.(error.message || "Failed to create account");
         return;
       }
 
-      // Call onSuccess callback for successful registration
-      onSuccess?.();
-
-      // Send both verification and welcome emails in parallel
+      toast.success("Account created! Please check your email to verify your account.");
       const [verificationResult, welcomeResult] = await Promise.all([
         resendVerificationEmail(values.email),
         sendWelcomeEmail(values.name, values.email),
@@ -341,12 +334,10 @@ export function RegisterForm({
       toast.success(
         "Account created! Please check your email to verify your account.",
       );
-      onVerificationRequired?.();
       router.push("/verification-pending");
     } catch {
       setError("root", { message: "An unexpected error occurred" });
       toast.error("An unexpected error occurred");
-      onError?.("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }

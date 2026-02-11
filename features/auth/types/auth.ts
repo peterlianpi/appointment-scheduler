@@ -54,31 +54,26 @@ export interface ThemeProps {
 }
 
 // Login page props
-export interface LoginPageProps extends AuthCallbacks, ThemeProps {
+export interface LoginPageProps extends ThemeProps {
   showRegisterLink?: boolean;
   showForgotPasswordLink?: boolean;
   redirectUrl?: string;
 }
 
 // Register form props
-export interface RegisterFormProps extends AuthCallbacks, ThemeProps {
+export interface RegisterFormProps extends ThemeProps {
   defaultEmail?: string;
   defaultName?: string;
   showLoginLink?: boolean;
 }
 
-// Forgot password form props
-export interface ForgotPasswordFormProps extends ThemeProps {
-  onSuccess?: () => void;
-  onLoginClick?: () => void;
-}
+// Forgot password form props - now extends only ThemeProps (callbacks removed)
+export type ForgotPasswordFormProps = ThemeProps;
 
-// Reset password form props
-export interface ResetPasswordFormProps extends ThemeProps {
+// Reset password form props - now extends only ThemeProps (callbacks removed)
+export type ResetPasswordFormProps = ThemeProps & {
   token?: string;
-  onSuccess?: () => void;
-  onBackToLogin?: () => void;
-}
+};
 
 // Resend verification form props
 export interface ResendVerificationFormProps extends ThemeProps {

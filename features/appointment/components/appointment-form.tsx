@@ -7,7 +7,6 @@ import {
   Clock,
   MapPin,
   Video,
-  X,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { Controller } from "react-hook-form";

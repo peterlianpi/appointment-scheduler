@@ -82,10 +82,9 @@ function PasswordInput({
 // ============================================
 
 export function LoginPage({
-  onSuccess,
-  onError,
   showRegisterLink = true,
   showForgotPasswordLink = true,
+  redirectUrl,
   theme = "light",
   className,
 }: LoginPageProps) {
@@ -131,23 +130,19 @@ export function LoginPage({
               "Please verify your email address before logging in. Check your email for the verification link.",
           });
           toast.error("Email verification required");
-          onError?.("Please verify your email address");
         } else {
           setError("root", { message: error.message || "Failed to login" });
           toast.error(error.message || "Failed to login");
-          onError?.(error.message || "Failed to login");
         }
         return;
       }
 
       toast.success("Login successful!");
-      onSuccess?.();
-      router.push("/dashboard");
+      router.push(redirectUrl || "/dashboard");
       router.refresh();
     } catch {
       setError("root", { message: "An unexpected error occurred" });
       toast.error("An unexpected error occurred");
-      onError?.("An unexpected error occurred");
     } finally {
       setIsLoading(false);
     }

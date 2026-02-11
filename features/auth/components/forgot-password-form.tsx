@@ -37,8 +37,6 @@ type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 // ============================================
 
 export function ForgotPasswordForm({
-  onSuccess,
-  onLoginClick,
   theme = "light",
   className,
 }: ForgotPasswordFormProps) {
@@ -47,9 +45,10 @@ export function ForgotPasswordForm({
   const [isSuccess, setIsSuccess] = useState(false);
 
   // Apply theme classes
-  const themeClasses = theme === "dark"
-    ? "bg-gray-900 border-gray-800 text-gray-100"
-    : "bg-white border-gray-200 text-gray-900";
+  const themeClasses =
+    theme === "dark"
+      ? "bg-gray-900 border-gray-800 text-gray-100"
+      : "bg-white border-gray-200 text-gray-900";
 
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -76,7 +75,6 @@ export function ForgotPasswordForm({
       toast.success(
         "If an account exists with this email, you will receive a password reset link.",
       );
-      onSuccess?.();
     } catch {
       toast.error("An unexpected error occurred");
     } finally {
@@ -85,7 +83,6 @@ export function ForgotPasswordForm({
   };
 
   const handleBackToLogin = () => {
-    onLoginClick?.();
     router.push("/login");
   };
 
@@ -103,8 +100,8 @@ export function ForgotPasswordForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground text-center">
-            If you don&apos;t receive an email within a few minutes, check your spam
-            folder or{" "}
+            If you don&apos;t receive an email within a few minutes, check your
+            spam folder or{" "}
             <button
               onClick={() => {
                 setIsSuccess(false);

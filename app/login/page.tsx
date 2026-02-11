@@ -1,4 +1,4 @@
-import { LoginPage } from "@/features/auth/components/login-page";
+import { LoginPageWrapper } from "@/features/auth/components/auth-form-wrapper";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -23,12 +23,7 @@ export default async function LoginPageRoute({
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginPage
-          redirectUrl={callbackURL}
-          onSuccess={() => {
-            // Navigation is handled internally by the component
-          }}
-        />
+        <LoginPageWrapper redirectUrl={callbackURL} />
       </div>
     </div>
   );

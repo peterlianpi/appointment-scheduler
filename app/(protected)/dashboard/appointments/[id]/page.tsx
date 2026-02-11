@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppointmentForm } from "@/features/appointment/components/appointment-form";
+import { AppointmentFormWrapper } from "@/features/appointment/components/appointment-form-wrapper";
 import { useAppointment } from "@/features/appointment/api/use-appointments";
 
 export default function AppointmentPage() {
@@ -85,7 +85,7 @@ export default function AppointmentPage() {
       </div>
 
       {/* Form - using Dialog component for consistent styling */}
-      <AppointmentForm
+      <AppointmentFormWrapper
         open={true}
         onOpenChange={(open) => {
           if (!open) handleClose();

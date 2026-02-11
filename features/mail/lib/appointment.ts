@@ -218,28 +218,54 @@ export async function sendAppointmentCancelled(
 /**
  * Send bulk reminders for appointments in the next 24 hours
  * This function is designed to be called by a cron job
+ *
+ * Options:
+ * - testMode: If set, sends all reminders to this email address instead of user emails
+ * - testIntervalMinutes: In test mode, looks for appointments in the next X minutes (default: 5)
  */
-export async function sendBulkReminders(): Promise<{
+export async function sendBulkReminders(options?: {
+  testMode?: string;
+  testIntervalMinutes?: number;
+}): Promise<{
   total: number;
   sent: number;
   failed: number;
 }> {
   console.log(`[AppointmentMail] Starting bulk reminder job...`);
 
+  const testMode = options?.testMode;
+  const testIntervalMinutes = options?.testIntervalMinutes || 5;
+
   const now = new Date();
-  const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-  const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+
+  let startWindow: Date;
+  let endWindow: Date;
+
+  if (testMode) {
+    // Test mode: look for appointments in the next X minutes
+    startWindow = now;
+    endWindow = new Date(now.getTime() + testIntervalMinutes * 60 * 1000);
+    console.log(
+      `[AppointmentMail] TEST MODE: Looking for appointments between ${startWindow.toISOString()} and ${endWindow.toISOString()}`,
+    );
+  } else {
+    // Normal mode: look for appointments in the next 24-25 hours
+    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+    const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
+    startWindow = twentyFourHoursFromNow;
+    endWindow = twentyFiveHoursFromNow;
+  }
 
   try {
-    // Find appointments scheduled between 24 and 25 hours from now
-    // that haven't had a reminder sent yet
+    // Find appointments in the window that haven't had a reminder sent yet
+    // In test mode, we include appointments regardless of reminderSent status
     const appointmentsToRemind = await prisma.appointment.findMany({
       where: {
         status: "SCHEDULED",
-        reminderSent: false,
+        ...(testMode ? {} : { reminderSent: false }),
         startDateTime: {
-          gte: twentyFourHoursFromNow,
-          lt: twentyFiveHoursFromNow,
+          gte: startWindow,
+          lt: endWindow,
         },
         deletedAt: null,
       },
@@ -262,20 +288,29 @@ export async function sendBulkReminders(): Promise<{
         const emailData = buildEmailData(appointment);
         const { subject, html } = generateAppointmentReminderEmail(emailData);
 
+        // In test mode, send to the test email; otherwise send to user's email
+        const recipientEmail = testMode || appointment.user.email;
+
         await sendEmail({
-          to: appointment.user.email,
+          to: recipientEmail,
           subject,
           html,
         });
 
-        // Mark reminder as sent
-        await prisma.appointment.update({
-          where: { id: appointment.id },
-          data: {
-            reminderSent: true,
-            reminderSentAt: new Date(),
-          },
-        });
+        // Only mark reminder as sent in normal mode (not test mode)
+        if (!testMode) {
+          await prisma.appointment.update({
+            where: { id: appointment.id },
+            data: {
+              reminderSent: true,
+              reminderSentAt: new Date(),
+            },
+          });
+        } else {
+          console.log(
+            `[AppointmentMail] TEST MODE: Reminder would be sent for appointment: ${appointment.id}`,
+          );
+        }
 
         sent++;
         console.log(

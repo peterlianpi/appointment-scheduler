@@ -15,6 +15,8 @@ import { sendBulkReminders } from "@/features/mail/lib/appointment";
  *
  * Environment variables:
  * - CRON_SECRET: Optional secret key for cron job authentication
+ * - TEST_SEND_TO_MAIL: If set, sends all reminders to this email (test mode)
+ * - TEST_CRON_INTERVAL_MINUTES: If set, uses this interval in minutes for testing (default: 5)
  */
 
 const app = new Hono()
@@ -41,7 +43,23 @@ const app = new Hono()
     try {
       console.log("[Cron] Starting appointment reminder job...");
 
-      const result = await sendBulkReminders();
+      const testMode = process.env.TEST_SEND_TO_MAIL;
+      const testIntervalMinutes = parseInt(
+        process.env.TEST_CRON_INTERVAL_MINUTES || "5",
+        10,
+      );
+
+      if (testMode) {
+        console.log(`[Cron] TEST MODE ENABLED - Sending to: ${testMode}`);
+        console.log(
+          `[Cron] Test interval: every ${testIntervalMinutes} minutes`,
+        );
+      }
+
+      const result = await sendBulkReminders({
+        testMode,
+        testIntervalMinutes,
+      });
 
       console.log("[Cron] Appointment reminder job completed successfully");
 
@@ -94,7 +112,23 @@ const app = new Hono()
     try {
       console.log("[Cron] Starting appointment reminder job (POST)...");
 
-      const result = await sendBulkReminders();
+      const testMode = process.env.TEST_SEND_TO_MAIL;
+      const testIntervalMinutes = parseInt(
+        process.env.TEST_CRON_INTERVAL_MINUTES || "5",
+        10,
+      );
+
+      if (testMode) {
+        console.log(`[Cron] TEST MODE ENABLED - Sending to: ${testMode}`);
+        console.log(
+          `[Cron] Test interval: every ${testIntervalMinutes} minutes`,
+        );
+      }
+
+      const result = await sendBulkReminders({
+        testMode,
+        testIntervalMinutes,
+      });
 
       console.log("[Cron] Appointment reminder job completed successfully");
 

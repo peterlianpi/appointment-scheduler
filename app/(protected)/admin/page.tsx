@@ -5,7 +5,7 @@ import { Plus, Calendar, Download, Users, Settings } from "lucide-react";
 import { StatsCard } from "@/features/dashboard/components/stats-card";
 import { Button } from "@/components/ui/button";
 import { AppointmentList } from "@/features/appointment/components/appointment-list";
-import { AppointmentForm } from "@/features/appointment/components/appointment-form";
+import { AppointmentFormWrapper } from "@/features/appointment/components/appointment-form-wrapper";
 import { Appointment } from "@/features/appointment/api/use-appointments";
 import { useAdminStats } from "@/features/admin/api/use-admin-stats";
 
@@ -130,7 +130,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <AppointmentForm
+      <AppointmentFormWrapper
         open={showForm}
         onOpenChange={setShowForm}
         appointment={editingAppointment}
