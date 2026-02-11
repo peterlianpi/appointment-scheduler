@@ -12,7 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Bell, User, Calendar, Mail } from "lucide-react";
+import { Bell, User, Calendar, Mail, Shield, Lock } from "lucide-react";
+import Link from "next/link";
 
 export default function SettingsPage() {
   return (
@@ -54,6 +55,35 @@ export default function SettingsPage() {
               <Input id="email" type="email" placeholder="john@example.com" />
             </div>
             <Button>Save Changes</Button>
+          </CardContent>
+        </Card>
+
+        {/* Security Settings */}
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-3">
+            <Shield className="h-5 w-5" />
+            <div>
+              <CardTitle>Security</CardTitle>
+              <CardDescription>
+                Manage your account security settings
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Password</Label>
+                <p className="text-sm text-muted-foreground">
+                  Change your account password
+                </p>
+              </div>
+              <Button variant="outline" asChild>
+                <Link href="/dashboard/settings/change-password">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Change Password
+                </Link>
+              </Button>
+            </div>
           </CardContent>
         </Card>
 

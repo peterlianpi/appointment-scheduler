@@ -1,6 +1,6 @@
 "use server";
 
-import { authClient } from "@/lib/auth-client";
+import { sendVerificationEmailAction } from "@/action/verification";
 import { revalidatePath } from "next/cache";
 import { toast } from "sonner";
 
@@ -12,13 +12,10 @@ export async function resendVerificationEmail(formData: FormData) {
   }
 
   try {
-    const { error } = await authClient.sendVerificationEmail({
-      email,
-      callbackURL: "/dashboard",
-    });
+    const result = await sendVerificationEmailAction(email);
 
-    if (error) {
-      return { error: error.message || "Failed to send verification email" };
+    if (result?.error) {
+      return { error: result.error };
     }
 
     toast.success("Verification email sent successfully!");

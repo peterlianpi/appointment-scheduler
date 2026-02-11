@@ -83,6 +83,15 @@ export interface LandingPageStats {
   satisfactionRate: number;
 }
 
+export interface ModelFeature {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+  capabilities: string[];
+  category: "core" | "scheduling" | "notifications" | "security" | "analytics";
+}
+
 export interface Testimonial {
   id: string;
   name: string;
@@ -91,14 +100,6 @@ export interface Testimonial {
   content: string;
   avatar?: string;
   rating: number;
-}
-
-export interface Feature {
-  id: string;
-  title: string;
-  description: string;
-  icon: string;
-  highlight?: boolean;
 }
 
 export interface PricingPlan {
@@ -114,9 +115,9 @@ export interface PricingPlan {
 
 export interface LandingPageData {
   stats: LandingPageStats;
-  testimonials: Testimonial[];
-  features: Feature[];
+  models: ModelFeature[];
   pricingPlans: PricingPlan[];
+  testimonials: Testimonial[];
 }
 
 export interface LandingPageResponse {

@@ -2,7 +2,7 @@
 
 import { Shield, ShieldAlert } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { useSession } from "@/lib/auth-client";
+import { useSession, authClient } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -26,10 +26,14 @@ export function AdminSwitch() {
   useEffect(() => {
     const checkAdminPermission = async () => {
       try {
-        // Check if user is admin by querying the database directly via API
-        const response = await fetch("/api/admin/check-admin");
-        const data = await response.json();
-        setIsAdmin(data.success && data.data?.isAdmin);
+        // Use Better Auth's admin client for permission checking
+        const { data } = await authClient.admin.hasPermission({
+          permissions: {
+            user: ["ban", "delete", "impersonate", "set-role", "set-password", "list"],
+            session: ["list", "revoke", "delete"],
+          },
+        });
+        setIsAdmin(data?.success ?? false);
       } catch {
         setIsAdmin(false);
       } finally {

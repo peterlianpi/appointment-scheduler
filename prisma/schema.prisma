@@ -61,7 +61,7 @@ model User {
   updatedAt     DateTime @updatedAt
 
   // Role-based access control
-  role UserRole @default(USER)
+  role String @default("USER")
 
   // Admin plugin fields
   banned     Boolean?  @default(false)
@@ -190,15 +190,15 @@ model AuditLog {
 // ==========================================
 
 model Session {
-  id             String   @id
-  expiresAt      DateTime
-  token          String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-  ipAddress      String?
-  userAgent      String?
-  userId         String
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   // Admin plugin fields
   impersonatedBy String?

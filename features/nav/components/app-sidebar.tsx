@@ -2,10 +2,10 @@
 
 import * as React from "react";
 import { Calendar, LayoutDashboard, Settings2 } from "lucide-react";
-import { NavMain } from "@/components/nav-main";
-import { NavUser } from "@/components/nav-user";
-import { TeamSwitcher } from "@/components/team-switcher";
-import { AdminSwitch } from "@/components/admin-switch";
+import { NavMain } from "@/features/nav/components/nav-main";
+import { NavUser } from "@/features/nav/components/nav-user";
+import { TeamSwitcher } from "@/features/nav/components/team-switcher";
+import { AdminSwitch } from "@/features/nav/components/admin-switch";
 import {
   Sidebar,
   SidebarContent,

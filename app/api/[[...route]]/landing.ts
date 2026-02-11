@@ -13,22 +13,13 @@ export interface LandingPageStats {
   satisfactionRate: number;
 }
 
-export interface Testimonial {
+export interface ModelFeature {
   id: string;
   name: string;
-  role: string;
-  company: string;
-  content: string;
-  avatar?: string;
-  rating: number;
-}
-
-export interface Feature {
-  id: string;
-  title: string;
   description: string;
   icon: string;
-  highlight?: boolean;
+  capabilities: string[];
+  category: "core" | "scheduling" | "notifications" | "security" | "analytics";
 }
 
 export interface PricingPlan {
@@ -42,11 +33,21 @@ export interface PricingPlan {
   ctaText: string;
 }
 
+export interface Testimonial {
+  id: string;
+  name: string;
+  role: string;
+  company: string;
+  content: string;
+  avatar?: string;
+  rating: number;
+}
+
 export interface LandingPageData {
   stats: LandingPageStats;
-  testimonials: Testimonial[];
-  features: Feature[];
+  models: ModelFeature[];
   pricingPlans: PricingPlan[];
+  testimonials: Testimonial[];
 }
 
 // ============================================
@@ -93,140 +94,184 @@ const app = new Hono()
         satisfactionRate,
       };
 
-      // Static testimonial data
-      const testimonials: Testimonial[] = [
+      // Model features based on database schema
+      const models: ModelFeature[] = [
         {
-          id: "1",
-          name: "Sarah Johnson",
-          role: "CEO",
-          company: "TechStart Inc.",
-          content:
-            "This appointment scheduler has transformed how we manage our client meetings. The automated reminders alone have reduced no-shows by 80%!",
-          rating: 5,
-        },
-        {
-          id: "2",
-          name: "Michael Chen",
-          role: "Practice Manager",
-          company: "Chen Dental Group",
-          content:
-            "We used to spend hours on the phone scheduling appointments. Now our patients can book 24/7, and our staff focuses on what matters most - patient care.",
-          rating: 5,
-        },
-        {
-          id: "3",
-          name: "Emily Rodriguez",
-          role: "HR Director",
-          company: "Global Solutions",
-          content:
-            "The team scheduling feature is a game-changer. We can easily coordinate meetings across different time zones and departments.",
-          rating: 5,
-        },
-      ];
-
-      // Feature highlights
-      const features: Feature[] = [
-        {
-          id: "1",
-          title: "Smart Scheduling",
+          id: "user-management",
+          name: "User Management",
           description:
-            "AI-powered scheduling that finds the perfect time for everyone, considering availability and preferences automatically.",
-          icon: "calendar",
-          highlight: true,
-        },
-        {
-          id: "2",
-          title: "Automated Reminders",
-          description:
-            "Never miss an appointment with intelligent email and SMS reminders sent automatically before each meeting.",
-          icon: "bell",
-        },
-        {
-          id: "3",
-          title: "Team Collaboration",
-          description:
-            "Easily manage group appointments, team meetings, and coordinate schedules across your entire organization.",
+            "Comprehensive user system with role-based access control",
           icon: "users",
+          capabilities: [
+            "User registration and authentication via Better Auth",
+            "Role-based access (USER/ADMIN)",
+            "Email verification support",
+            "Account banning and moderation",
+            "Soft delete for data preservation",
+            "Session management and security",
+          ],
+          category: "security",
         },
         {
-          id: "4",
-          title: "Real-time Sync",
-          description:
-            "Instant synchronization across all devices ensures everyone sees the same up-to-date schedule.",
-          icon: "sync",
+          id: "appointment",
+          name: "Appointment Scheduling",
+          description: "Full-featured appointment management system",
+          icon: "calendar",
+          capabilities: [
+            "Create and manage appointments with detailed scheduling",
+            "Track appointment status (Scheduled, Completed, Cancelled, No-Show)",
+            "Duration tracking and time management",
+            "Location and meeting URL support",
+            "Cancellation with reason tracking",
+            "Start and end time configuration",
+          ],
+          category: "scheduling",
         },
         {
-          id: "5",
-          title: "Analytics Dashboard",
+          id: "notifications",
+          name: "Notification System",
+          description: "Multi-channel notification delivery",
+          icon: "bell",
+          capabilities: [
+            "Email notification delivery",
+            "Reminder system with configurable timing",
+            "Notification read status tracking",
+            "Type-based categorization (appointment, reminder, system)",
+            "Related entity linking",
+            "Audit trail for notifications",
+          ],
+          category: "notifications",
+        },
+        {
+          id: "audit-logs",
+          name: "Audit Logging",
+          description: "Comprehensive activity tracking and monitoring",
+          icon: "shield",
+          capabilities: [
+            "Track all entity changes (CREATE, UPDATE, DELETE, VIEW)",
+            "Before/after value comparison with JSON",
+            "User action attribution",
+            "IP address and user agent logging",
+            "Entity relationship tracking",
+            "Historical data preservation",
+          ],
+          category: "analytics",
+        },
+        {
+          id: "integrations",
+          name: "Authentication & Integrations",
           description:
-            "Gain insights into appointment patterns, no-show rates, and team productivity with comprehensive analytics.",
+            "Enterprise-grade authentication and third-party connections",
+          icon: "lock",
+          capabilities: [
+            "Better Auth framework integration",
+            "OAuth provider support",
+            "Session-based authentication",
+            "Rate limiting for security",
+            "Verification tokens",
+            "Password management",
+          ],
+          category: "security",
+        },
+        {
+          id: "analytics",
+          name: "Analytics & Reporting",
+          description: "Data-driven insights and performance metrics",
           icon: "chart",
-        },
-        {
-          id: "6",
-          title: "Custom Branding",
-          description:
-            "White-label the scheduling experience with your company's branding for a professional touch.",
-          icon: "palette",
+          capabilities: [
+            "Appointment completion rates",
+            "No-show tracking and analysis",
+            "User activity patterns",
+            "System utilization metrics",
+            "Export capabilities",
+            "Dashboard integration",
+          ],
+          category: "analytics",
         },
       ];
 
       // Pricing plans
       const pricingPlans: PricingPlan[] = [
         {
-          id: "free",
+          id: "starter",
           name: "Starter",
           price: 0,
           interval: "month",
-          description: "Perfect for individuals getting started",
+          description: "Perfect for individuals and small practices",
           features: [
             "Up to 20 appointments/month",
-            "Email reminders",
-            "Basic scheduling",
-            "1 team member",
+            "Basic scheduling features",
+            "Email notifications",
+            "User authentication",
+            "Mobile responsive",
+            "Community support",
           ],
-          ctaText: "Get Started Free",
+          ctaText: "Start Free",
         },
         {
-          id: "pro",
+          id: "professional",
           name: "Professional",
           price: 29,
           interval: "month",
-          description: "Ideal for growing teams",
+          description: "Ideal for growing businesses",
           features: [
             "Unlimited appointments",
+            "Advanced scheduling",
             "SMS & Email reminders",
-            "Team collaboration",
+            "Audit logging",
             "Analytics dashboard",
-            "Custom branding",
-            "Priority support",
+            "Priority email support",
+            "API access",
           ],
           highlighted: true,
-          ctaText: "Start Free Trial",
+          ctaText: "Start Trial",
         },
         {
           id: "enterprise",
           name: "Enterprise",
           price: 99,
           interval: "month",
-          description: "For large organizations",
+          description: "For large organizations with advanced needs",
           features: [
             "Everything in Professional",
-            "Unlimited team members",
-            "Advanced integrations",
+            "Unlimited users",
+            "Custom integrations",
             "Dedicated account manager",
-            "Custom development",
             "SLA guarantee",
+            "Custom development",
+            "On-premise deployment option",
           ],
           ctaText: "Contact Sales",
         },
       ];
 
+      // Testimonials (kept for social proof)
+      const testimonials: Testimonial[] = [
+        {
+          id: "1",
+          name: "Sarah Johnson",
+          role: "Practice Manager",
+          company: "HealthFirst Clinic",
+          content:
+            "The audit logging and notification system has transformed how we manage our patient appointments. Highly recommended!",
+          rating: 5,
+        },
+        {
+          id: "2",
+          name: "Michael Chen",
+          role: "IT Director",
+          company: "TechServe Solutions",
+          content:
+            "Enterprise-grade security with Better Auth, excellent analytics, and seamless integrations. Our team loves it.",
+          rating: 5,
+        },
+      ];
+
       const data: LandingPageData = {
         stats,
-        testimonials,
-        features,
+        models,
         pricingPlans,
+        testimonials,
       };
 
       return c.json({

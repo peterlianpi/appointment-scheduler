@@ -1,9 +1,9 @@
-import { betterAuth } from "better-auth";
+import { redirect } from "next/navigation";
+import { betterAuth, User } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { admin } from "better-auth/plugins";
 import prisma from "./prisma";
 import { sendEmail } from "@/features/mail/lib";
-import { User } from "@/lib/generated/prisma/client";
 import { emailOTP } from "better-auth/plugins";
 import {
   emailTemplates,
@@ -53,60 +53,91 @@ export const auth = betterAuth({
     enabled: true,
     autoSignIn: false, //defaults to true
     requireEmailVerification: true,
-    emailVerification: {
-      sendVerificationEmail: async (
-        { user, url, token }: { user: User; url: string; token: string },
-        request?: Request,
-      ) => {
-        const { subject, html } = emailTemplates.emailVerification({
-          name: user.name || user.email.split("@")[0],
-          email: user.email,
-          verificationLink: url,
-        });
+    sendResetPassword: async (
+      { user, url, token: _ }: { user: User; url: string; token: string },
+      _request?: Request,
+    ): Promise<void> => {
+      const { subject, html } = emailTemplates.passwordReset({
+        name: user.name || user.email.split("@")[0],
+        email: user.email,
+        resetLink: url,
+      });
 
-        await sendEmail({
-          to: user.email,
-          subject,
-          html,
-        });
-      },
-      sendResetPassword: async (
-        { user, url, token }: { user: User; url: string; token: string },
-        request?: Request,
-      ) => {
-        const { subject, html } = emailTemplates.passwordReset({
-          name: user.name || user.email.split("@")[0],
-          email: user.email,
-          resetLink: url,
-        });
-
-        await sendEmail({
-          to: user.email,
-          subject,
-          html,
-        });
-      },
-      onPasswordReset: async ({ user }: { user: User }, request?: Request) => {
-        const { subject, html } = emailTemplates.passwordChanged({
-          name: user.name || user.email.split("@")[0],
-          email: user.email,
-        });
-
-        await sendEmail({
-          to: user.email,
-          subject,
-          html,
-        });
-      },
+      await sendEmail({
+        to: user.email,
+        subject,
+        html,
+      });
     },
+  },
+  emailVerification: {
+    autoSignInAfterVerification: true,
+    sendOnSignUp: true,
+    sendVerificationEmail: async (
+      { user, url, token: _ }: { user: User; url: string; token: string },
+      _request?: Request,
+    ): Promise<void> => {
+      const { subject, html } = emailTemplates.emailVerification({
+        name: user.name || user.email.split("@")[0],
+        email: user.email,
+        verificationLink: url,
+      });
+
+      console.log("[Better Auth] Sending verification email to:", user.email);
+      console.log("[Better Auth] Verification URL:", url);
+
+      await sendEmail({
+        to: user.email,
+        subject,
+        html,
+      });
+    },
+
+    onPasswordReset: async (
+      { user }: { user: User },
+      _request?: Request,
+    ): Promise<void> => {
+      const { subject, html } = emailTemplates.passwordChanged({
+        name: user.name || user.email.split("@")[0],
+        email: user.email,
+      });
+
+      await sendEmail({
+        to: user.email,
+        subject,
+        html,
+      });
+    },
+  },
+  onVerifyEmail: async (
+    { user: _ }: { user: User },
+    request?: Request,
+  ): Promise<void> => {
+    // Redirect to the success page after email verification
+    if (request) {
+      const url = new URL(request.url);
+      const callbackURL =
+        url.searchParams.get("callbackURL") || "/verify-email/success";
+      throw redirect(callbackURL);
+    }
+    throw redirect("/verify-email/success");
   },
   plugins: [
     emailOTP({
-      async sendVerificationOTP({ email, otp, type }) {
+      async sendVerificationOTP({ email, otp, type: _ }) {
         const userName = email.split("@")[0];
         await sendTwoFactorOtpEmail(email, userName, otp);
       },
     }),
-    admin(),
+    admin({
+      defaultRole: "user",
+      adminRoles: ["ADMIN"],
+      impersonationSessionDuration: 60 * 60 * 24, // 1 day
+      defaultBanReason: "Policy violation",
+      defaultBanExpiresIn: 60 * 60 * 24 * 7, // 7 days
+      bannedUserMessage: "Your account has been banned. Please contact support.",
+      allowImpersonatingAdmins: false,
+    }),
   ],
 });
+

@@ -1,4 +1,3 @@
-import { z } from "zod";
 import prisma from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { Hono, type Context } from "hono";
@@ -19,38 +18,25 @@ export interface CheckAdminResponse {
 }
 
 // ============================================
-// VALIDATION SCHEMAS
-// ============================================
-
-// ============================================
 // HELPER FUNCTIONS
 // ============================================
 
-async function getSessionUser(c: Context) {
+async function checkIsAdmin(c: Context): Promise<boolean> {
   const cookie = c.req.header("cookie");
   const headers: Record<string, string> = cookie ? { Cookie: cookie } : {};
 
-  const session = await auth.api.getSession({
-    headers,
-  });
-
+  // Use Better Auth's session to check admin role
+  const session = await auth.api.getSession({ headers });
   if (!session?.user) {
-    return null;
+    return false;
   }
 
+  // Check if user has admin role via direct query (Better Auth admin plugin)
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { id: true, role: true, email: true, name: true },
-  });
-
-  return user;
-}
-
-async function isAdmin(userId: string): Promise<boolean> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
     select: { role: true },
   });
+
   return user?.role === "ADMIN";
 }
 
@@ -64,8 +50,11 @@ const app = new Hono()
   // ============================================
   .get("/check-admin", async (c) => {
     try {
-      const sessionUser = await getSessionUser(c);
-      if (!sessionUser) {
+      const cookie = c.req.header("cookie");
+      const headers: Record<string, string> = cookie ? { Cookie: cookie } : {};
+
+      const session = await auth.api.getSession({ headers });
+      if (!session?.user) {
         return c.json(
           {
             success: false,
@@ -75,10 +64,12 @@ const app = new Hono()
         );
       }
 
-      const isAdminUser = await isAdmin(sessionUser.id);
+      // Check admin role directly (Better Auth compatible approach)
+      const isAdmin = await checkIsAdmin(c);
+
       return c.json({
         success: true,
-        data: { isAdmin: isAdminUser } as CheckAdminResponse,
+        data: { isAdmin } as CheckAdminResponse,
       });
     } catch (error) {
       console.error("Check admin error:", error);
@@ -99,25 +90,14 @@ const app = new Hono()
   // ============================================
   .get("/stats", async (c) => {
     try {
-      const sessionUser = await getSessionUser(c);
-      if (!sessionUser) {
+      const isAdminUser = await checkIsAdmin(c);
+      if (!isAdminUser) {
         return c.json(
           {
             success: false,
             error: { code: "UNAUTHORIZED", message: "Authentication required" },
           },
           401,
-        );
-      }
-
-      const isAdminUser = await isAdmin(sessionUser.id);
-      if (!isAdminUser) {
-        return c.json(
-          {
-            success: false,
-            error: { code: "FORBIDDEN", message: "Admin access required" },
-          },
-          403,
         );
       }
 

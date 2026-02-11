@@ -17,8 +17,8 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { AppSidebar } from "@/components/app-sidebar";
-import { ModeToggle } from "@/components/theme-toggle";
+import { AppSidebar } from "@/features/nav/components/app-sidebar";
+import { ModeToggle } from "@/features/nav/components/theme-toggle";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
 
 const BREADCRUMB_LABELS: Record<string, string> = {
@@ -94,7 +94,9 @@ export default function AppointmentsLayout({
             </div>
           </div>
         </header>
-        <div className="container flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="container flex flex-1 flex-col gap-4 p-4 pt-0">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
