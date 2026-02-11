@@ -6,10 +6,12 @@ import {
   ChevronsUpDown,
   CreditCard,
   LogOut,
+  Shield,
   Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth-client";
+import { useState, useEffect } from "react";
+import { authClient, useSession } from "@/lib/auth-client";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -36,11 +38,45 @@ interface User {
 export function NavUser({ user }: { user: User }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const { data: session } = useSession();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoadingAdmin, setIsLoadingAdmin] = useState(true);
+
+  useEffect(() => {
+    const checkAdminPermission = async () => {
+      try {
+        const { data } = await authClient.admin.hasPermission({
+          permissions: { user: ["get"] } as const,
+        });
+        setIsAdmin(data?.success ?? false);
+      } catch {
+        // Fallback: no admin access if check fails
+        setIsAdmin(false);
+      } finally {
+        setIsLoadingAdmin(false);
+      }
+    };
+
+    if (session?.user) {
+      checkAdminPermission();
+    } else {
+      setIsLoadingAdmin(false);
+    }
+  }, [session]);
 
   const handleLogout = async () => {
-    await authClient.signOut();
-    router.push("/login");
-    router.refresh();
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          router.push("/login");
+          router.refresh();
+        },
+      },
+    });
+  };
+
+  const handleAdminAccess = () => {
+    router.push("/admin");
   };
 
   return (
@@ -97,6 +133,12 @@ export function NavUser({ user }: { user: User }) {
             </DropdownMenuLabel>
 
             <DropdownMenuSeparator />
+            {!isLoadingAdmin && isAdmin && (
+              <DropdownMenuItem onClick={handleAdminAccess}>
+                <Shield />
+                Admin Panel
+              </DropdownMenuItem>
+            )}
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut />
               Log out

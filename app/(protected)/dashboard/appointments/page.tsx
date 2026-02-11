@@ -12,7 +12,7 @@ import {
   Appointment,
   AppointmentStatus,
   useAppointments,
-} from "@/hooks/use-appointments";
+} from "@/features/appointment/api/use-appointments";
 import { AppointmentDetail } from "@/features/appointment/components/appointment-detail";
 
 const statusTabs = [

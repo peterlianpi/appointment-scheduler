@@ -15,7 +15,7 @@ import {
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
-} from "@/hooks/use-notifications";
+} from "@/features/notifications/api/use-notifications";
 
 export function NotificationBell() {
   const { data: notifications, isLoading } = useNotifications();
@@ -60,7 +60,7 @@ export function NotificationBell() {
           <span className="sr-only">Notifications</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-80">
+      <DropdownMenuContent align="end" className="w-96">
         <DropdownMenuLabel className="flex items-center justify-between">
           Notifications
           {unreadCount > 0 && (

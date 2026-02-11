@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ModeToggle } from "@/components/theme-toggle";
-import { NotificationBell } from "@/components/notification-bell";
+import { NotificationBell } from "@/features/notifications/components/notification-bell";
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",

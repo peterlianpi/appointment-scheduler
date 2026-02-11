@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
-import { Appointment, AppointmentStatus } from "@/hooks/use-appointments";
+import {
+  Appointment,
+  AppointmentStatus,
+} from "@/features/appointment/api/use-appointments";
 
 interface AppointmentCardProps {
   appointment: Appointment;

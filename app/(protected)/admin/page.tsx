@@ -2,16 +2,18 @@
 
 import { useState } from "react";
 import { Plus, Calendar, Download, Users, Settings } from "lucide-react";
+import { StatsCard } from "@/features/dashboard/components/stats-card";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AppointmentList } from "@/features/appointment/components/appointment-list";
 import { AppointmentForm } from "@/features/appointment/components/appointment-form";
-import { Appointment } from "@/hooks/use-appointments";
+import { Appointment } from "@/features/appointment/api/use-appointments";
+import { useAdminStats } from "@/features/admin/api/use-admin-stats";
 
 export default function AdminPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
+  const { data: stats, isLoading, error } = useAdminStats();
 
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment);
@@ -56,56 +58,38 @@ export default function AdminPage() {
       <div className="flex flex-1 flex-col gap-4 p-0">
         {/* Admin Stats */}
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Users</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">
-                Active users in system
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Appointments
-              </CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">All appointments</p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Exports</CardTitle>
-              <Download className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">-</div>
-              <p className="text-xs text-muted-foreground">
-                Data exports this month
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                System Status
-              </CardTitle>
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold text-green-600">Active</div>
-              <p className="text-xs text-muted-foreground">
-                All systems operational
-              </p>
-            </CardContent>
-          </Card>
+          <StatsCard
+            title="Total Users"
+            value={stats?.data.totalUsers ?? 0}
+            description="Active users in system"
+            icon={Users}
+            isLoading={isLoading}
+            error={!!error}
+          />
+          <StatsCard
+            title="Total Appointments"
+            value={stats?.data.totalAppointments ?? 0}
+            description="All appointments"
+            icon={Calendar}
+            isLoading={isLoading}
+            error={!!error}
+          />
+          <StatsCard
+            title="Upcoming Appointments"
+            value={stats?.data.upcomingAppointments ?? 0}
+            description="Scheduled appointments"
+            icon={Calendar}
+            isLoading={isLoading}
+            error={!!error}
+          />
+          <StatsCard
+            title="Completed Appointments"
+            value={stats?.data.completedAppointments ?? 0}
+            description="Completed appointments"
+            icon={Settings}
+            isLoading={isLoading}
+            error={!!error}
+          />
         </div>
 
         {/* Admin Content */}
@@ -119,16 +103,15 @@ export default function AdminPage() {
                 <p className="text-muted-foreground">
                   Manage all appointments and export data
                 </p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={handleExport}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Export CSV
-                </Button>
-                <Button onClick={() => setShowForm(true)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Appointment
-                </Button>
+                <div className="flex gap-2 pt-4">
+                  <Button variant="outline" onClick={handleExport}>
+                    <Download className="mr-2 h-4 w-4" />
+                    Export CSV
+                  </Button>
+                  <Button onClick={() => setShowForm(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
 

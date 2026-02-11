@@ -63,6 +63,11 @@ model User {
   // Role-based access control
   role UserRole @default(USER)
 
+  // Admin plugin fields
+  banned     Boolean?  @default(false)
+  banReason  String?
+  banExpires DateTime?
+
   // Soft delete support
   deletedAt DateTime?
 
@@ -185,15 +190,18 @@ model AuditLog {
 // ==========================================
 
 model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String   @id
+  expiresAt      DateTime
+  token          String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  ipAddress      String?
+  userAgent      String?
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Admin plugin fields
+  impersonatedBy String?
 
   @@unique([token])
   @@index([userId])

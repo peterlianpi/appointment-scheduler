@@ -1,14 +1,11 @@
 "use client";
 
 import * as React from "react";
-import {
-  Calendar,
-  LayoutDashboard,
-  Settings2,
-} from "lucide-react";
+import { Calendar, LayoutDashboard, Settings2 } from "lucide-react";
 import { NavMain } from "@/components/nav-main";
 import { NavUser } from "@/components/nav-user";
 import { TeamSwitcher } from "@/components/team-switcher";
+import { AdminSwitch } from "@/components/admin-switch";
 import {
   Sidebar,
   SidebarContent,
@@ -33,11 +30,12 @@ const data = {
       url: "/dashboard",
       icon: LayoutDashboard,
       isActive: true,
-      items:  [
+      items: [
         {
           title: "Dashboard",
           url: "/dashboard",
-        }],
+        },
+      ],
     },
     {
       title: "Appointments",
@@ -72,10 +70,6 @@ const data = {
           title: "General",
           url: "/dashboard/settings",
         },
-        {
-          title: "Notifications",
-          url: "/dashboard/settings/notifications",
-        },
       ],
     },
   ],
@@ -100,6 +94,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
         <TeamSwitcher teams={data.teams} />
+        <AdminSwitch />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={data.navMain} />

@@ -45,7 +45,7 @@ import {
   useUpdateAppointmentStatus,
   useDeleteAppointment,
   AppointmentStatus,
-} from "@/hooks/use-appointments";
+} from "@/features/appointment/api/use-appointments";
 
 interface AppointmentListProps {
   onEdit?: (appointment: Appointment) => void;
@@ -375,11 +375,11 @@ export function AppointmentList({
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted-foreground">
                 Showing {(page - 1) * limit + 1} to{" "}
                 {Math.min(page * limit, meta?.total || 0)} of {meta?.total || 0}{" "}
-                appointments
+                <span className="hidden sm:inline">appointments</span>
               </div>
               <div className="flex items-center gap-2">
                 <Button
@@ -389,7 +389,7 @@ export function AppointmentList({
                   disabled={page === 1}
                 >
                   <ChevronLeft className="h-4 w-4" />
-                  Previous
+                  <span className="hidden sm:inline">Previous</span>
                 </Button>
                 <div className="flex items-center gap-1">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
@@ -413,7 +413,7 @@ export function AppointmentList({
                   onClick={() => setPageValue(Math.min(totalPages, page + 1))}
                   disabled={page === totalPages}
                 >
-                  Next
+                  <span className="hidden sm:inline">Next</span>
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>

@@ -6,7 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AppointmentForm } from "@/features/appointment/components/appointment-form";
-import { useAppointment } from "@/hooks/use-appointments";
+import { useAppointment } from "@/features/appointment/api/use-appointments";
 
 export default function AppointmentPage() {
   const params = useParams();

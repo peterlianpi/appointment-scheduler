@@ -31,7 +31,7 @@ import {
   useAppointment,
   useUpdateAppointmentStatus,
   useDeleteAppointment,
-} from "@/hooks/use-appointments";
+} from "@/features/appointment/api/use-appointments";
 
 interface AppointmentDetailProps {
   appointmentId: string | null;

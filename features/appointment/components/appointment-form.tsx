@@ -43,7 +43,7 @@ import {
   Appointment,
   useCreateAppointment,
   useUpdateAppointment,
-} from "@/hooks/use-appointments";
+} from "@/features/appointment/api/use-appointments";
 
 // ============================================
 // Zod Schema
@@ -237,7 +237,7 @@ export function AppointmentForm({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full my-4 h-full overflow-y-auto">
         <DialogHeader className="relative pr-10">
           <DialogTitle className="text-lg sm:text-xl">
             {isEditing ? "Edit Appointment" : "Create Appointment"}
