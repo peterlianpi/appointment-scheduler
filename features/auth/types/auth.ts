@@ -47,44 +47,52 @@ export interface AuthCallbacks {
   onVerificationRequired?: () => void;
 }
 
-// Theme props
-export interface ThemeProps {
-  theme?: "light" | "dark";
+// Base props with className
+export interface BaseProps {
   className?: string;
 }
 
 // Login page props
-export interface LoginPageProps extends ThemeProps {
+export interface LoginPageProps {
   showRegisterLink?: boolean;
   showForgotPasswordLink?: boolean;
   redirectUrl?: string;
+  className?: string;
 }
 
 // Register form props
-export interface RegisterFormProps extends ThemeProps {
+export interface RegisterFormProps {
   defaultEmail?: string;
   defaultName?: string;
   showLoginLink?: boolean;
+  className?: string;
 }
 
-// Forgot password form props - now extends only ThemeProps (callbacks removed)
-export type ForgotPasswordFormProps = ThemeProps;
+// Forgot password form props
+export type ForgotPasswordFormProps = {
+  className?: string;
+};
 
-// Reset password form props - now extends only ThemeProps (callbacks removed)
-export type ResetPasswordFormProps = ThemeProps & {
+// Reset password form props
+export type ResetPasswordFormProps = {
   token?: string;
+  className?: string;
 };
 
 // Resend verification form props
-export interface ResendVerificationFormProps extends ThemeProps {
+// Resend verification form props
+export interface ResendVerificationFormProps {
   onSuccess?: () => void;
   onBackToLogin?: () => void;
+  className?: string;
 }
 
 // Verify email page props
-export interface VerifyEmailPageProps extends ThemeProps {
+// Verify email page props
+export interface VerifyEmailPageProps {
   callbackUrl?: string;
   onGoToDashboard?: () => void;
+  className?: string;
 }
 
 // Password input props
@@ -100,7 +108,6 @@ export interface PasswordInputProps {
   disabled?: boolean;
   required?: boolean;
   error?: string;
-  theme?: "light" | "dark";
   className?: string;
 }
 
@@ -110,7 +117,6 @@ export interface PasswordStrengthIndicatorProps {
   name?: string;
   email?: string;
   oldPassword?: string;
-  theme?: "light" | "dark";
   className?: string;
 }
 

@@ -24,17 +24,10 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export function ResendVerificationForm({
-  theme = "light",
   className,
 }: ResendVerificationFormProps) {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isPending, startTransition] = useTransition();
-
-  // Apply theme classes
-  const themeClasses =
-    theme === "dark"
-      ? "bg-gray-900 border-gray-800 text-gray-100"
-      : "bg-white border-gray-200 text-gray-900";
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),

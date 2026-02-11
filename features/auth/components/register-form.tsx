@@ -254,18 +254,11 @@ function PasswordInput({
 export function RegisterForm({
   defaultEmail = "",
   defaultName = "",
-  theme = "light",
   showLoginLink = true,
   className,
 }: RegisterFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
-  // Apply theme classes
-  const themeClasses =
-    theme === "dark"
-      ? "bg-gray-900 border-gray-800"
-      : "bg-white border-gray-200";
 
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(registerFormSchema),
@@ -297,7 +290,9 @@ export function RegisterForm({
         return;
       }
 
-      toast.success("Account created! Please check your email to verify your account.");
+      toast.success(
+        "Account created! Please check your email to verify your account.",
+      );
       const [verificationResult, welcomeResult] = await Promise.all([
         resendVerificationEmail(values.email),
         sendWelcomeEmail(values.name, values.email),
@@ -344,7 +339,7 @@ export function RegisterForm({
   };
 
   return (
-    <Card className={cn(themeClasses, "w-full max-w-md", className)}>
+    <Card className={cn("w-full max-w-md", className)}>
       <CardHeader>
         <CardTitle>Create an account</CardTitle>
         <CardDescription>
@@ -388,7 +383,6 @@ export function RegisterForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="password">Password</FieldLabel>
                 <PasswordInput
                   name="password"
                   label="Password"
@@ -404,10 +398,7 @@ export function RegisterForm({
               </Field>
 
               <Field>
-                <FieldLabel htmlFor="confirmPassword">
-                  Confirm Password
-                </FieldLabel>
-                <PasswordInput
+                  <PasswordInput
                   name="confirmPassword"
                   label="Confirm Password"
                   placeholder="Confirm your password"

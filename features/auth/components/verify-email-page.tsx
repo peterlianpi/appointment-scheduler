@@ -20,22 +20,15 @@ import type { VerifyEmailPageProps } from "../types/auth";
 export function VerifyEmailPage({
   callbackUrl = "/dashboard",
   onGoToDashboard,
-  theme = "light",
   className,
 }: VerifyEmailPageProps) {
-  // Apply theme classes
-  const themeClasses =
-    theme === "dark"
-      ? "bg-gray-900 border-gray-800 text-gray-100"
-      : "bg-white border-gray-200 text-gray-900";
-
   const handleGoToDashboard = () => {
     onGoToDashboard?.();
     window.location.href = callbackUrl;
   };
 
   return (
-    <Card className={cn(themeClasses, "w-full max-w-md", className)}>
+    <Card className={cn("w-full max-w-md", className)}>
       <CardHeader className="text-center">
         <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
           <CheckCircle2 className="h-8 w-8 text-green-600" />

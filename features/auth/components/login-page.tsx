@@ -85,17 +85,10 @@ export function LoginPage({
   showRegisterLink = true,
   showForgotPasswordLink = true,
   redirectUrl,
-  theme = "light",
   className,
 }: LoginPageProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-
-  // Apply theme classes
-  const themeClasses =
-    theme === "dark"
-      ? "bg-gray-900 border-gray-800"
-      : "bg-white border-gray-200";
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -158,7 +151,7 @@ export function LoginPage({
 
   return (
     <div className={cn("flex flex-col gap-6", className)}>
-      <Card className={cn(themeClasses, "w-full max-w-md")}>
+      <Card className={cn("w-full max-w-md", className)}>
         <CardHeader>
           <CardTitle>Login to your account</CardTitle>
           <CardDescription>

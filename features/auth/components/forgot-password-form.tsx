@@ -36,19 +36,10 @@ type ForgotPasswordValues = z.infer<typeof forgotPasswordSchema>;
 // Forgot Password Form Component
 // ============================================
 
-export function ForgotPasswordForm({
-  theme = "light",
-  className,
-}: ForgotPasswordFormProps) {
+export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-
-  // Apply theme classes
-  const themeClasses =
-    theme === "dark"
-      ? "bg-gray-900 border-gray-800 text-gray-100"
-      : "bg-white border-gray-200 text-gray-900";
 
   const form = useForm<ForgotPasswordValues>({
     resolver: zodResolver(forgotPasswordSchema),
@@ -88,7 +79,7 @@ export function ForgotPasswordForm({
 
   if (isSuccess) {
     return (
-      <Card className={cn(themeClasses, "w-full max-w-md", className)}>
+      <Card className={cn("w-full max-w-md", className)}>
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <Mail className="h-6 w-6 text-green-600" />
@@ -100,8 +91,8 @@ export function ForgotPasswordForm({
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-sm text-muted-foreground text-center">
-            If you don&apos;t receive an email within a few minutes, check your
-            spam folder or{" "}
+            If you don&apos;t receive an email within a few minutes, check your spam
+            folder or{" "}
             <button
               onClick={() => {
                 setIsSuccess(false);
@@ -127,7 +118,7 @@ export function ForgotPasswordForm({
   }
 
   return (
-    <Card className={cn(themeClasses, "w-full max-w-md", className)}>
+    <Card className={cn("w-full max-w-md", className)}>
       <CardHeader>
         <CardTitle>Forgot Password?</CardTitle>
         <CardDescription>

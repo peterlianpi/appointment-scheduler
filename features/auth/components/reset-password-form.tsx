@@ -96,13 +96,7 @@ function PasswordInput({
 // Reset Password Content Component
 // ============================================
 
-function ResetPasswordContent({
-  themeClasses,
-  className,
-}: {
-  themeClasses?: string;
-  className?: string;
-}) {
+function ResetPasswordContent({ className }: { className?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isLoading, setIsLoading] = useState(false);
@@ -161,7 +155,7 @@ function ResetPasswordContent({
 
   if (isSuccess) {
     return (
-      <Card className={cn(themeClasses, "w-full max-w-md", className)}>
+      <Card className={cn("w-full max-w-md", className)}>
         <CardHeader className="text-center">
           <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
             <CheckCircle2 className="h-6 w-6 text-green-600" />
@@ -182,7 +176,7 @@ function ResetPasswordContent({
   }
 
   return (
-    <Card className={cn(themeClasses, "w-full max-w-md", className)}>
+    <Card className={cn("w-full max-w-md", className)}>
       <CardHeader>
         <CardTitle>Reset Password</CardTitle>
         <CardDescription>
@@ -244,16 +238,7 @@ function ResetPasswordContent({
 // Reset Password Form Component
 // ============================================
 
-export function ResetPasswordForm({
-  theme = "light",
-  className,
-}: ResetPasswordFormProps) {
-  // Apply theme classes
-  const themeClasses =
-    theme === "dark"
-      ? "bg-gray-900 border-gray-800 text-gray-100"
-      : "bg-white border-gray-200 text-gray-900";
-
+export function ResetPasswordForm({ className }: ResetPasswordFormProps) {
   return (
     <Suspense
       fallback={
@@ -271,7 +256,7 @@ export function ResetPasswordForm({
         </div>
       }
     >
-      <ResetPasswordContent themeClasses={themeClasses} className={className} />
+      <ResetPasswordContent className={className} />
     </Suspense>
   );
 }

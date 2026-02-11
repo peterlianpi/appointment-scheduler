@@ -12,7 +12,6 @@ import { ResetPasswordForm } from "./reset-password-form";
 interface RegisterFormWrapperProps {
   defaultEmail?: string;
   defaultName?: string;
-  theme?: "light" | "dark";
   className?: string;
 }
 
@@ -28,7 +27,6 @@ interface LoginPageWrapperProps {
   showRegisterLink?: boolean;
   showForgotPasswordLink?: boolean;
   redirectUrl?: string;
-  theme?: "light" | "dark";
   className?: string;
 }
 
@@ -41,7 +39,6 @@ export function LoginPageWrapper(props: LoginPageWrapperProps) {
 // ============================================
 
 interface ForgotPasswordFormWrapperProps {
-  theme?: "light" | "dark";
   className?: string;
 }
 
@@ -57,7 +54,6 @@ export function ForgotPasswordFormWrapper(
 
 interface ResetPasswordFormWrapperProps {
   token?: string;
-  theme?: "light" | "dark";
   className?: string;
 }
 
