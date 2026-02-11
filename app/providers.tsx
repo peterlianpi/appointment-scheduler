@@ -16,7 +16,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
         enableSystem
         disableTransitionOnChange
       >
-        <TooltipProvider>{children}</TooltipProvider>
+        <TooltipProvider>
+          {children}
+          </TooltipProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,6 @@ import {
   AppointmentStatus,
   useAppointments,
 } from "@/hooks/use-appointments";
-import { AppointmentForm } from "@/components/appointment-form";
 import { AppointmentDetail } from "@/components/appointment-detail";
 
 const statusTabs = [
@@ -25,9 +24,7 @@ const statusTabs = [
 
 function AppointmentsContent() {
   const searchParams = useSearchParams();
-  const [showForm, setShowForm] = useState(false);
-  const [editingAppointment, setEditingAppointment] =
-    useState<Appointment | null>(null);
+  const router = useRouter();
   const [selectedAppointmentId, setSelectedAppointmentId] = useState<
     string | null
   >(null);
@@ -54,9 +51,12 @@ function AppointmentsContent() {
     search: search || undefined,
   });
 
+  const handleCreate = () => {
+    router.push("/dashboard/appointments/new");
+  };
+
   const handleEdit = (appointment: Appointment) => {
-    setEditingAppointment(appointment);
-    setShowForm(true);
+    router.push(`/dashboard/appointments/${appointment.id}`);
   };
 
   const handleView = (appointment: Appointment) => {
@@ -64,19 +64,9 @@ function AppointmentsContent() {
     setViewMode("detail");
   };
 
-  const handleFormClose = () => {
-    setShowForm(false);
-    setEditingAppointment(null);
-  };
-
   const handleDetailClose = () => {
     setSelectedAppointmentId(null);
     setViewMode("list");
-  };
-
-  const handleFormSuccess = () => {
-    setShowForm(false);
-    setEditingAppointment(null);
   };
 
   const handleSearch = (value: string) => {
@@ -99,7 +89,7 @@ function AppointmentsContent() {
             Manage and view all your appointments
           </p>
         </div>
-        <Button onClick={() => setShowForm(true)}>
+        <Button onClick={handleCreate}>
           <Plus className="mr-2 h-4 w-4" />
           <span className="hidden sm:inline">New Appointment</span>
           <span className="sm:hidden">New</span>
@@ -160,15 +150,6 @@ function AppointmentsContent() {
           />
         )}
       </div>
-
-     <div className="w-full">
-       <AppointmentForm
-        open={showForm}
-        onOpenChange={setShowForm}
-        appointment={editingAppointment}
-        onSuccess={handleFormSuccess}
-      />
-     </div>
     </div>
   );
 }
