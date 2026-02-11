@@ -136,35 +136,35 @@ const generateUser = (
   role,
 });
 
-// Generate a single appointment
-const generateAppointment = (
+// Generate a single appointment for cron testing
+const generateCronTestAppointment = (
   userId: string,
-  daysOffset: number,
+  daysFromNow: number,
+  hoursFromNow: number = 24,
 ): Prisma.AppointmentCreateWithoutUserInput => {
-  const startHour = randomInt(8, 17);
-  const duration = randomInt(30, 120);
   const startDate = new Date();
-  startDate.setDate(startDate.getDate() + randomInt(-30, 60) + daysOffset);
-  startDate.setHours(startHour, 0, 0, 0);
+  startDate.setDate(startDate.getDate() + daysFromNow);
+  startDate.setHours(startDate.getHours() + hoursFromNow, 0, 0, 0);
 
+  const duration = randomInt(30, 120);
   const endDate = new Date(startDate);
   endDate.setMinutes(endDate.getMinutes() + duration);
 
   return {
-    title: randomElement(APPOINTMENT_TITLES),
-    description: `Meeting with client for ${randomElement(APPOINTMENT_TITLES).toLowerCase()}`,
+    title: `[CRON TEST] ${randomElement(APPOINTMENT_TITLES)}`,
+    description: `Test appointment for cron job - ${daysFromNow} days, ${hoursFromNow} hours from now`,
     startDateTime: startDate,
     endDateTime: endDate,
     duration,
-    status: randomElement(["SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]),
+    status: "SCHEDULED" as const,
     location: randomElement(LOCATION_TYPES),
     meetingUrl:
       Math.random() > 0.5
-        ? `https://meet.example.com/${Math.random().toString(36).substr(2, 8)}`
+        ? `https://meet.example.com/cron-test-${Date.now()}`
         : null,
-    emailNotificationSent: Math.random() > 0.3,
-    reminderSent: Math.random() > 0.5,
-    reminderSentAt: randomDate(new Date(2024, 0, 1), new Date()),
+    emailNotificationSent: false,
+    reminderSent: false,
+    reminderSentAt: null,
   };
 };
 
@@ -221,27 +221,77 @@ export async function main() {
   }
   console.log(`✅ Created ${users.length} users`);
 
-  // 4. Create appointments (500+ appointments)
-  console.log("\n📅 Creating appointments...");
+  // Combine all user IDs for creating appointments
   const allUserIds = [...admins, ...users];
-  let appointmentCount = 0;
 
-  // Create appointments per user (10-30 per user)
-  for (const userId of allUserIds) {
-    const numAppointments = randomInt(10, 30);
-    for (let i = 0; i < numAppointments; i++) {
+  // 4. Create appointments for cron testing (next 30 days)
+  console.log("\n📅 Creating cron test appointments...");
+  const cronTestUserId = admin.id; // Use admin user for cron test appointments
+
+  // Create appointments at different intervals for testing
+  const cronIntervals = [
+    { days: 0, hours: 2, label: "2 hours from now" },
+    { days: 0, hours: 6, label: "6 hours from now" },
+    { days: 0, hours: 12, label: "12 hours from now" },
+    { days: 0, hours: 23, label: "23 hours from now" },
+    { days: 0, hours: 24, label: "24 hours from now (will trigger cron)" },
+    { days: 1, hours: 0, label: "1 day from now" },
+    { days: 1, hours: 4, label: "1 day + 4 hours from now" },
+    { days: 3, hours: 0, label: "3 days from now" },
+    { days: 7, hours: 0, label: "7 days from now" },
+    { days: 14, hours: 0, label: "14 days from now" },
+    { days: 30, hours: 0, label: "30 days from now" },
+  ];
+
+  // Create multiple appointments at each interval for thorough testing
+  let cronAppointmentCount = 0;
+  for (let userIdx = 0; userIdx < Math.min(5, users.length); userIdx++) {
+    const testUserId = users[userIdx];
+    for (const interval of cronIntervals) {
+      const appointmentData = generateCronTestAppointment(testUserId, interval.days, interval.hours);
       await prisma.appointment.create({
         data: {
-          ...generateAppointment(userId, i * 2),
-          userId,
+          ...appointmentData,
+          userId: testUserId,
         },
       });
-      appointmentCount++;
+      cronAppointmentCount++;
     }
   }
-  console.log(`✅ Created ${appointmentCount} appointments`);
+  console.log(`✅ Created ${cronAppointmentCount} cron test appointments`);
 
-  // 5. Create audit logs (300+ logs)
+  // 5. Create random historical appointments (for normal operation)
+  console.log("\n📅 Creating random appointments...");
+  const randomAppointmentCount = 100;
+  let randomCount = 0;
+
+  for (let i = 0; i < randomAppointmentCount; i++) {
+    const userId = users[randomInt(0, users.length - 1)];
+    const daysOffset = randomInt(-30, 30);
+    const appointment = await prisma.appointment.create({
+      data: {
+        title: randomElement(APPOINTMENT_TITLES),
+        description: `Random appointment ${i + 1}`,
+        startDateTime: randomDate(
+          new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+          new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        ),
+        endDateTime: new Date(),
+        duration: randomInt(30, 120),
+        status: randomElement(["SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]),
+        location: randomElement(LOCATION_TYPES),
+        meetingUrl: Math.random() > 0.5 ? `https://meet.example.com/${i}` : null,
+        emailNotificationSent: Math.random() > 0.5,
+        reminderSent: Math.random() > 0.5,
+        reminderSentAt: randomDate(new Date(2024, 0, 1), new Date()),
+        userId,
+      },
+    });
+    randomCount++;
+  }
+  console.log(`✅ Created ${randomCount} random appointments`);
+
+  // 6. Create audit logs
   console.log("\n📝 Creating audit logs...");
   const auditActions: AuditAction[] = [
     "CREATE",
@@ -276,7 +326,7 @@ export async function main() {
   }
   console.log(`✅ Created ${auditCount} audit logs`);
 
-  // 6. Create notifications (200+ notifications)
+  // 7. Create notifications
   console.log("\n🔔 Creating notifications...");
   const notificationTypes = [
     "appointment",
@@ -313,14 +363,13 @@ export async function main() {
   console.log("🎉 Seed completed successfully!");
   console.log("=".repeat(50));
   console.log(`📊 Total records created:`);
-  console.log(
-    `   - Users: ${allUserIds.length} (${admins.length} admins, ${users.length} regular)`,
-  );
-  console.log(`   - Appointments: ${appointmentCount}`);
+  console.log(`   - Users: ${allUserIds.length} (${admins.length} admins, ${users.length} regular)`);
+  console.log(`   - Cron Test Appointments: ${cronAppointmentCount}`);
+  console.log(`   - Random Appointments: ${randomCount}`);
   console.log(`   - Audit Logs: ${auditCount}`);
   console.log(`   - Notifications: ${notificationCount}`);
   console.log(
-    `   - Total: ${allUserIds.length + appointmentCount + auditCount + notificationCount}`,
+    `   - Total: ${allUserIds.length + cronAppointmentCount + randomCount + auditCount + notificationCount}`,
   );
 }
 
