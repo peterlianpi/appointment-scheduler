@@ -399,7 +399,7 @@ function TestimonialsSection({
                   ))}
                 </div>
                 <CardDescription className="mt-4 text-base">
-                  "{testimonial.content}"
+                  &quot;{testimonial.content}&quot;
                 </CardDescription>
               </CardHeader>
               <CardContent className="mt-auto">
