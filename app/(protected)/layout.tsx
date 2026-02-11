@@ -31,11 +31,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   all: "All",
 };
 
-export default function AppointmentsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+function BreadcrumbHandler({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const status = searchParams.get("status");
@@ -53,6 +49,46 @@ export default function AppointmentsLayout({
   });
 
   return (
+    <>
+      <Breadcrumb className="flex-1 overflow-hidden">
+        <BreadcrumbList>
+          {breadcrumbItems.map((item, index) => (
+            <React.Fragment key={item.href}>
+              {index > 0 && <BreadcrumbSeparator />}
+              <BreadcrumbItem>
+                {item.isLast ? (
+                  <BreadcrumbPage className="truncate max-w-50">
+                    {status
+                      ? `${item.label} (${status.charAt(0).toUpperCase() + status.slice(1)})`
+                      : item.label}
+                  </BreadcrumbPage>
+                ) : (
+                  <BreadcrumbLink
+                    href={item.href}
+                    className="truncate max-w-50"
+                  >
+                    {item.label}
+                  </BreadcrumbLink>
+                )}
+              </BreadcrumbItem>
+            </React.Fragment>
+          ))}
+        </BreadcrumbList>
+      </Breadcrumb>
+      <div className="flex items-center gap-2">
+        <NotificationBell />
+        <ModeToggle />
+      </div>
+    </>
+  );
+}
+
+export default function AppointmentsLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
     <SidebarProvider>
       <AppSidebar />
       <SidebarInset>
@@ -63,35 +99,15 @@ export default function AppointmentsLayout({
               orientation="vertical"
               className="mr-2 data-[orientation=vertical]:h-4"
             />
-            <Breadcrumb className="flex-1 overflow-hidden">
-              <BreadcrumbList>
-                {breadcrumbItems.map((item, index) => (
-                  <React.Fragment key={item.href}>
-                    {index > 0 && <BreadcrumbSeparator />}
-                    <BreadcrumbItem>
-                      {item.isLast ? (
-                        <BreadcrumbPage className="truncate max-w-50">
-                          {status
-                            ? `${item.label} (${status.charAt(0).toUpperCase() + status.slice(1)})`
-                            : item.label}
-                        </BreadcrumbPage>
-                      ) : (
-                        <BreadcrumbLink
-                          href={item.href}
-                          className="truncate max-w-50"
-                        >
-                          {item.label}
-                        </BreadcrumbLink>
-                      )}
-                    </BreadcrumbItem>
-                  </React.Fragment>
-                ))}
-              </BreadcrumbList>
-            </Breadcrumb>
-            <div className="flex items-center gap-2">
-              <NotificationBell />
-              <ModeToggle />
-            </div>
+            <React.Suspense
+              fallback={
+                <div className="flex-1 overflow-hidden">
+                  <div className="h-4 w-32 animate-pulse bg-muted rounded" />
+                </div>
+              }
+            >
+              <BreadcrumbHandler>{children}</BreadcrumbHandler>
+            </React.Suspense>
           </div>
         </header>
         <div className="container flex flex-1 flex-col gap-4 p-4 pt-0">
