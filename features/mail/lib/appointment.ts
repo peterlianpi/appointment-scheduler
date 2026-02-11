@@ -249,11 +249,15 @@ export async function sendBulkReminders(options?: {
       `[AppointmentMail] TEST MODE: Looking for appointments between ${startWindow.toISOString()} and ${endWindow.toISOString()}`,
     );
   } else {
-    // Normal mode: look for appointments in the next 24-25 hours
-    const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
-    startWindow = twentyFourHoursFromNow;
-    endWindow = twentyFiveHoursFromNow;
+    // Normal mode: look for appointments in the next 23-24 hours (24 hours before reminder)
+    const twentyThreeHoursFromNow = new Date(
+      now.getTime() + 23 * 60 * 60 * 1000,
+    );
+    const twentyFourHoursFromNow = new Date(
+      now.getTime() + 24 * 60 * 60 * 1000,
+    );
+    startWindow = twentyThreeHoursFromNow;
+    endWindow = twentyFourHoursFromNow;
   }
 
   try {
