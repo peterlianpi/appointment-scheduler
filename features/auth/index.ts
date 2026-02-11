@@ -37,9 +37,6 @@ export type { VerifyEmailToken } from "./types/auth";
 /** Authentication callback functions. */
 export type { AuthCallbacks } from "./types/auth";
 
-/** Theme configuration props. */
-export type { ThemeProps } from "./types/auth";
-
 /** Login page component props. */
 export type { LoginPageProps } from "./types/auth";
 
