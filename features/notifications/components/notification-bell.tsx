@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { Bell } from "lucide-react";
 import {
   DropdownMenu,
@@ -11,24 +12,73 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import {
   useNotifications,
   useMarkNotificationRead,
   useMarkAllNotificationsRead,
+  type NotificationItem,
 } from "@/features/notifications/api/use-notifications";
 
 export function NotificationBell() {
+  const router = useRouter();
   const { data: notifications, isLoading } = useNotifications();
   const markAsRead = useMarkNotificationRead();
   const markAllAsRead = useMarkAllNotificationsRead();
 
+  const [pendingReadIds, setPendingReadIds] = React.useState<Set<string>>(
+    new Set(),
+  );
+
   const unreadCount = notifications?.filter((n) => !n.read).length ?? 0;
 
-  const handleMarkAsRead = (id: string) => {
-    markAsRead.mutate(id);
+  const handleNotificationClick = async (
+    e: React.MouseEvent,
+    notification: NotificationItem,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Check if already read - skip processing for idempotency
+    if (notification.read) {
+      navigateToNotification(notification);
+      return;
+    }
+
+    // Check if already pending - prevent duplicate clicks
+    if (pendingReadIds.has(notification.id)) {
+      return;
+    }
+
+    setPendingReadIds((prev) => new Set(prev).add(notification.id));
+
+    try {
+      await markAsRead.mutateAsync(notification.id);
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+      toast.error("Failed to update notification");
+    } finally {
+      setPendingReadIds((prev) => {
+        const next = new Set(prev);
+        next.delete(notification.id);
+        return next;
+      });
+    }
+
+    navigateToNotification(notification);
   };
 
-  const handleMarkAllAsRead = () => {
+  const navigateToNotification = (notification: NotificationItem) => {
+    if (notification.entityType === "appointment" && notification.entityId) {
+      router.push(`/appointments/${notification.entityId}`);
+    } else {
+      router.push("/dashboard/notifications");
+    }
+  };
+
+  const handleMarkAllAsRead = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     markAllAsRead.mutate();
   };
 
@@ -45,6 +95,11 @@ export function NotificationBell() {
     if (hours < 24) return `${hours} hour${hours > 1 ? "s" : ""} ago`;
     if (days < 7) return `${days} day${days > 1 ? "s" : ""} ago`;
     return d.toLocaleDateString();
+  };
+
+  const formatReadAt = (date: Date | string) => {
+    const d = new Date(date);
+    return d.toLocaleString();
   };
 
   return (
@@ -68,7 +123,7 @@ export function NotificationBell() {
               variant="ghost"
               size="sm"
               className="text-xs text-muted-foreground"
-              onClick={handleMarkAllAsRead}
+              onClick={(e) => handleMarkAllAsRead(e)}
             >
               Mark all as read
             </Button>
@@ -90,7 +145,8 @@ export function NotificationBell() {
               className={`flex flex-col items-start gap-1 p-3 ${
                 !notification.read ? "bg-muted/50" : ""
               } cursor-pointer`}
-              onClick={() => handleMarkAsRead(notification.id)}
+              onClick={(e) => handleNotificationClick(e, notification)}
+              disabled={pendingReadIds.has(notification.id)}
             >
               <div className="flex w-full items-center justify-between">
                 <span className="font-medium">{notification.title}</span>
@@ -101,14 +157,22 @@ export function NotificationBell() {
               <span className="text-sm text-muted-foreground">
                 {notification.description}
               </span>
-              <span className="text-xs text-muted-foreground">
-                {formatTime(notification.createdAt)}
-              </span>
+              <div className="flex w-full items-center justify-between text-xs text-muted-foreground">
+                <span>{formatTime(notification.createdAt)}</span>
+                {notification.readAt && (
+                  <span className="opacity-60">
+                    Read {formatReadAt(notification.readAt)}
+                  </span>
+                )}
+              </div>
             </DropdownMenuItem>
           ))
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem className="text-center text-primary">
+        <DropdownMenuItem
+          className="text-center text-primary cursor-pointer"
+          onClick={() => router.push("/dashboard/notifications")}
+        >
           View all notifications
         </DropdownMenuItem>
       </DropdownMenuContent>
