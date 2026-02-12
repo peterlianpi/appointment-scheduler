@@ -39,6 +39,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useSession } from "@/lib/auth-client";
 import { useSessions } from "@/features/auth/hooks/use-sessions";
 import {
   useUserPreferences,
@@ -47,9 +48,10 @@ import {
 } from "@/features/preferences/api/use-preferences";
 
 export default function SettingsPage() {
+  const { data: session, isPending: isLoadingSession } = useSession();
   const {
     sessions,
-    isLoading,
+    isLoading: isLoadingSessions,
     refreshSessions,
     signOutSession,
     signOutAllDevices,
@@ -111,6 +113,13 @@ export default function SettingsPage() {
     return format(d, "MMM d, yyyy 'at' h:mm a");
   };
 
+  // Extract user data from session
+  const user = session?.user;
+  const userName = user?.name || "";
+  const userEmail = user?.email || "";
+  const firstName = userName.split(" ").slice(0, -1).join(" ") || "";
+  const lastName = userName.split(" ").slice(-1).join(" ") || "";
+
   const getDeviceInfo = (userAgent?: string | null) => {
     if (!userAgent) return "Unknown Device";
 
@@ -149,18 +158,43 @@ export default function SettingsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First Name</Label>
-                <Input id="firstName" placeholder="John" />
+                <Input
+                  id="firstName"
+                  placeholder="John"
+                  defaultValue={firstName}
+                  disabled={isLoadingSession}
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
-                <Input id="lastName" placeholder="Doe" />
+                <Input
+                  id="lastName"
+                  placeholder="Doe"
+                  defaultValue={lastName}
+                  disabled={isLoadingSession}
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="john@example.com" />
+              <Input
+                id="email"
+                type="email"
+                placeholder="john@example.com"
+                defaultValue={userEmail}
+                disabled={isLoadingSession}
+              />
             </div>
-            <Button>Save Changes</Button>
+            <Button disabled={isLoadingSession}>
+              {isLoadingSession ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                "Save Changes"
+              )}
+            </Button>
           </CardContent>
         </Card>
 
@@ -209,7 +243,7 @@ export default function SettingsPage() {
               <div className="space-y-0.5">
                 <Label>Current Sessions</Label>
                 <p className="text-sm text-muted-foreground">
-                  {isLoading
+                  {isLoadingSessions
                     ? "Loading..."
                     : `${sessions.length} active session${sessions.length !== 1 ? "s" : ""}`}
                 </p>
@@ -251,7 +285,7 @@ export default function SettingsPage() {
                       variant="outline"
                       size="sm"
                       onClick={() => signOutSession(session.id)}
-                      disabled={isLoading}
+                      disabled={isLoadingSessions}
                       className="sm:flex-shrink-0 w-full sm:w-auto h-10 sm:h-9"
                     >
                       <LogOut className="h-4 w-4 mr-2 sm:mr-0 sm:hidden" />
