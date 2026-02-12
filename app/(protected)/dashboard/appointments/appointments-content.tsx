@@ -43,7 +43,7 @@ export function AppointmentsContent() {
   );
   const [search, setSearch] = useState(initialSearch);
 
-  const { data: _data } = useAppointments({
+  useAppointments({
     page,
     limit: 10,
     status: status === "all" ? undefined : status,

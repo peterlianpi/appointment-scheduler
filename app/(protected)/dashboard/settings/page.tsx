@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import {
   Card,
   CardContent,
@@ -12,10 +13,76 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
-import { Bell, User, Calendar, Mail, Shield, Lock } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Bell,
+  User,
+  Calendar,
+  Mail,
+  Shield,
+  Lock,
+  Laptop,
+  LogOut,
+  RefreshCw,
+} from "lucide-react";
 import Link from "next/link";
+import { format } from "date-fns";
+import { useSessions } from "@/features/auth/hooks/use-sessions";
 
 export default function SettingsPage() {
+  const {
+    sessions,
+    isLoading,
+    refreshSessions,
+    signOutSession,
+    signOutAllDevices,
+  } = useSessions();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  useEffect(() => {
+    refreshSessions();
+  }, [refreshSessions]);
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refreshSessions();
+    setIsRefreshing(false);
+  };
+
+  const handleSignOutAll = async () => {
+    const success = await signOutAllDevices();
+    if (success) {
+      // Redirect to login page
+      window.location.href = "/login";
+    }
+  };
+
+  const formatSessionDate = (date: Date | string) => {
+    const d = new Date(date);
+    return format(d, "MMM d, yyyy 'at' h:mm a");
+  };
+
+  const getDeviceInfo = (userAgent?: string | null) => {
+    if (!userAgent) return "Unknown Device";
+
+    // Simple browser detection
+    if (userAgent.includes("Chrome")) return "Chrome Browser";
+    if (userAgent.includes("Firefox")) return "Firefox Browser";
+    if (userAgent.includes("Safari")) return "Safari Browser";
+    if (userAgent.includes("Edge")) return "Edge Browser";
+
+    return "Unknown Device";
+  };
   return (
     <div className="p-0">
       <div className="space-y-6">
@@ -83,6 +150,141 @@ export default function SettingsPage() {
                   Change Password
                 </Link>
               </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Active Sessions */}
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-3">
+            <Laptop className="h-5 w-5" />
+            <div>
+              <CardTitle>Active Sessions</CardTitle>
+              <CardDescription>
+                Manage your active login sessions
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label>Current Sessions</Label>
+                <p className="text-sm text-muted-foreground">
+                  {isLoading
+                    ? "Loading..."
+                    : `${sessions.length} active session${sessions.length !== 1 ? "s" : ""}`}
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+              >
+                <RefreshCw
+                  className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
+            </div>
+
+            {sessions.length > 0 && (
+              <div className="space-y-2">
+                {sessions.slice(0, 5).map((session) => (
+                  <div
+                    key={session.id}
+                    className="flex items-center justify-between p-3 border rounded-lg"
+                  >
+                    <div className="flex items-center gap-3">
+                      <Laptop className="h-4 w-4 text-muted-foreground" />
+                      <div>
+                        <p className="text-sm font-medium">
+                          {getDeviceInfo(session.userAgent)}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {session.ipAddress || "Unknown IP"} •{" "}
+                          {formatSessionDate(session.createdAt)}
+                        </p>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => signOutSession(session.id)}
+                      disabled={isLoading}
+                    >
+                      <LogOut className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
+                {sessions.length > 5 && (
+                  <p className="text-sm text-muted-foreground">
+                    And {sessions.length - 5} more...
+                  </p>
+                )}
+              </div>
+            )}
+
+            <Separator />
+
+            <div className="flex flex-col gap-3">
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out of other devices
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Sign out of other devices?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will sign you out of all other devices except this
+                      one. You will need to log in again on those devices.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleRefresh}>
+                      Continue
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    variant="destructive"
+                    className="w-full justify-start"
+                  >
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Sign out of all devices
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>
+                      Sign out of all devices?
+                    </AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will sign you out of all devices including this one.
+                      You will need to log in again to access your account.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction
+                      onClick={handleSignOutAll}
+                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    >
+                      Sign out all
+                    </AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           </CardContent>
         </Card>

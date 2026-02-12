@@ -58,6 +58,7 @@ export const ModelName = {
   Account: 'Account',
   Verification: 'Verification',
   Notification: 'Notification',
+  UserPreferences: 'UserPreferences',
   RateLimit: 'RateLimit'
 } as const
 
@@ -196,6 +197,23 @@ export const NotificationScalarFieldEnum = {
 } as const
 
 export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[keyof typeof NotificationScalarFieldEnum]
+
+
+export const UserPreferencesScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  reminderEnabled: 'reminderEnabled',
+  reminderHoursBefore: 'reminderHoursBefore',
+  emailReminders: 'emailReminders',
+  inAppReminders: 'inAppReminders',
+  appointmentCreatedNotif: 'appointmentCreatedNotif',
+  appointmentRescheduledNotif: 'appointmentRescheduledNotif',
+  appointmentCancelledNotif: 'appointmentCancelledNotif',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+} as const
+
+export type UserPreferencesScalarFieldEnum = (typeof UserPreferencesScalarFieldEnum)[keyof typeof UserPreferencesScalarFieldEnum]
 
 
 export const RateLimitScalarFieldEnum = {

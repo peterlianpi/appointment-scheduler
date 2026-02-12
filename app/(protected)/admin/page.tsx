@@ -4,25 +4,37 @@ import { useState } from "react";
 import { Plus, Calendar, Download, Users, Settings } from "lucide-react";
 import { StatsCard } from "@/features/dashboard/components/stats-card";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { AppointmentList } from "@/features/appointment/components/appointment-list";
 import { AppointmentFormWrapper } from "@/features/appointment/components/appointment-form-wrapper";
 import { Appointment } from "@/features/appointment/api/use-appointments";
-import { useAdminStats } from "@/features/admin/api/use-admin-stats";
+import {
+  useAdminStats,
+  useExportAppointments,
+} from "@/features/admin/api/use-admin-stats";
 
 export default function AdminPage() {
   const [showForm, setShowForm] = useState(false);
   const [editingAppointment, setEditingAppointment] =
     useState<Appointment | null>(null);
   const { data: stats, isLoading, error } = useAdminStats();
+  const exportMutation = useExportAppointments();
+
+  // Export state
+  const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
 
   const handleEdit = (appointment: Appointment) => {
     setEditingAppointment(appointment);
     setShowForm(true);
-  };
-
-  const handleFormClose = () => {
-    setShowForm(false);
-    setEditingAppointment(null);
   };
 
   const handleFormSuccess = () => {
@@ -33,20 +45,11 @@ export default function AdminPage() {
   // CSV Export functionality
   const handleExport = async () => {
     try {
-      const response = await fetch("/api/appointment/export");
-      if (!response.ok) {
-        throw new Error("Failed to export appointments");
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `appointments-${new Date().toISOString().split("T")[0]}.csv`;
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      exportMutation.mutate({
+        format: exportFormat,
+        startDate: startDate || undefined,
+        endDate: endDate || undefined,
+      });
     } catch (error) {
       console.error("Export failed:", error);
       alert("Failed to export appointments. Please try again.");
@@ -104,9 +107,44 @@ export default function AdminPage() {
                   Manage all appointments and export data
                 </p>
                 <div className="flex gap-2 pt-4">
-                  <Button variant="outline" onClick={handleExport}>
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="date"
+                      placeholder="Start Date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="w-40"
+                    />
+                    <span className="text-muted-foreground">to</span>
+                    <Input
+                      type="date"
+                      placeholder="End Date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="w-40"
+                    />
+                  </div>
+                  <Select
+                    value={exportFormat}
+                    onValueChange={(value) =>
+                      setExportFormat(value as "csv" | "json")
+                    }
+                  >
+                    <SelectTrigger className="w-32">
+                      <SelectValue placeholder="Format" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="csv">CSV</SelectItem>
+                      <SelectItem value="json">JSON</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    onClick={handleExport}
+                    disabled={exportMutation.isPending}
+                  >
                     <Download className="mr-2 h-4 w-4" />
-                    Export CSV
+                    {exportMutation.isPending ? "Exporting..." : "Export"}
                   </Button>
                   <Button onClick={() => setShowForm(true)}>
                     <Plus className="h-4 w-4" />

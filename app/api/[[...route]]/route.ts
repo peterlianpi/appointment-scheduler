@@ -3,6 +3,7 @@ import { handle } from "hono/vercel";
 
 import appointment from "./appointment";
 import notifications from "./notifications";
+import preferences from "./preferences";
 import admin from "./admin";
 import landing from "./landing";
 import cleanup from "./cron/cleanup";
@@ -14,6 +15,7 @@ const app = new Hono().basePath("/api");
 const route = app
   .route("/appointment", appointment)
   .route("/notifications", notifications)
+  .route("/preferences", preferences)
   .route("/landing", landing)
   .route("/cron/cleanup", cleanup)
   .route("/cron/reminders", reminders)

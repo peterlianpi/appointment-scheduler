@@ -79,6 +79,17 @@ export function LoginForm({
               "Please verify your email address before logging in. Check your email for the verification link.",
           });
           toast.error("Email verification required");
+        } else if (
+          error.message?.toLowerCase().includes("rate") ||
+          error.message?.toLowerCase().includes("too many") ||
+          error.message?.toLowerCase().includes("locked")
+        ) {
+          // Rate limiting error - show appropriate message
+          setError("root", {
+            message:
+              "Too many login attempts. Please wait a moment before trying again.",
+          });
+          toast.error("Too many login attempts. Please try again later.");
         } else {
           setError("root", { message: error.message || "Failed to login" });
           toast.error(error.message || "Failed to login");

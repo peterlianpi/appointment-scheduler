@@ -12,6 +12,7 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,6 +23,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+
 import {
   Table,
   TableBody,
@@ -39,6 +46,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Checkbox } from "@/components/ui/checkbox";
+
 import {
   Appointment,
   useAppointments,
@@ -46,19 +55,25 @@ import {
   useDeleteAppointment,
   AppointmentStatus,
 } from "@/features/appointment/api/use-appointments";
+import { useDebouncedSearch } from "@/features/appointment/hooks/use-debounced-search";
 
 interface AppointmentListProps {
   onEdit?: (appointment: Appointment) => void;
   onView?: (appointment: Appointment) => void;
   showFilters?: boolean;
   userId?: string;
-  // Controlled state props
+  // Controlled state props (single status)
   status?: AppointmentStatus | "all";
+  // Controlled state props (array of statuses)
+  statuses?: string[];
   page?: number;
   search?: string;
+  dateRangeType?: "upcoming" | "past" | "all";
   onStatusChange?: (status: AppointmentStatus | "all") => void;
+  onStatusesChange?: (statuses: string[]) => void;
   onPageChange?: (page: number) => void;
   onSearchChange?: (search: string) => void;
+  onDateRangeTypeChange?: (type: "upcoming" | "past" | "all") => void;
 }
 
 const statusColors: Record<AppointmentStatus, string> = {
@@ -70,39 +85,62 @@ const statusColors: Record<AppointmentStatus, string> = {
     "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
 };
 
+const allStatuses: AppointmentStatus[] = [
+  "SCHEDULED",
+  "COMPLETED",
+  "CANCELLED",
+  "NO_SHOW",
+];
+
 export function AppointmentList({
   onEdit,
   onView,
   showFilters = true,
   userId,
-  status: controlledStatus,
+  statuses: controlledStatuses,
   page: controlledPage,
   search: controlledSearch,
-  onStatusChange,
+  dateRangeType: controlledDateRangeType,
+  onStatusesChange,
   onPageChange,
   onSearchChange,
+  onDateRangeTypeChange,
 }: AppointmentListProps) {
-  // Use controlled state if provided, otherwise use internal state
-  const [internalStatus, setInternalStatus] = useState<
-    AppointmentStatus | "all"
-  >("all");
+  // Use controlled statuses if provided, otherwise use internal state
+  const [internalStatuses, setInternalStatuses] = useState<string[]>([]);
   const [internalPage, setInternalPage] = useState(1);
-  const [internalSearch, setInternalSearch] = useState("");
+  const [internalDateRangeType, setInternalDateRangeType] = useState<
+    "upcoming" | "past" | "all"
+  >("all");
 
-  const status =
-    controlledStatus !== undefined ? controlledStatus : internalStatus;
+  // Debounced search
+  const [debouncedSearch, setSearchInput, clearSearch, searchInput] =
+    useDebouncedSearch(300);
+
+  // Determine which status mode to use
+  const hasControlledStatuses = controlledStatuses !== undefined;
+
+  // Use controlled statuses based on what's provided
+  const statuses = hasControlledStatuses
+    ? controlledStatuses
+    : internalStatuses;
   const page = controlledPage !== undefined ? controlledPage : internalPage;
+  const dateRangeType =
+    controlledDateRangeType !== undefined
+      ? controlledDateRangeType
+      : internalDateRangeType;
   const search =
-    controlledSearch !== undefined ? controlledSearch : internalSearch;
+    controlledSearch !== undefined ? controlledSearch : debouncedSearch;
+
   const limit = 10;
 
-  const setStatus = (value: AppointmentStatus | "all") => {
-    if (onStatusChange) {
-      onStatusChange(value);
+  const setStatuses = (value: string[]) => {
+    if (onStatusesChange) {
+      onStatusesChange(value);
     } else {
-      setInternalStatus(value);
+      setInternalStatuses(value);
     }
-    // Reset page when status changes
+    // Reset page when filters change
     if (onPageChange) {
       onPageChange(1);
     } else {
@@ -118,13 +156,12 @@ export function AppointmentList({
     }
   };
 
-  const setSearchValue = (value: string) => {
-    if (onSearchChange) {
-      onSearchChange(value);
+  const setDateRangeType = (value: "upcoming" | "past" | "all") => {
+    if (onDateRangeTypeChange) {
+      onDateRangeTypeChange(value);
     } else {
-      setInternalSearch(value);
+      setInternalDateRangeType(value);
     }
-    // Reset page when search changes
     if (onPageChange) {
       onPageChange(1);
     } else {
@@ -135,10 +172,12 @@ export function AppointmentList({
   const { data, isLoading, error, refetch } = useAppointments({
     page,
     limit,
-    status: status === "all" ? undefined : (status as AppointmentStatus),
+    statuses: statuses.length > 0 ? statuses.join(",") : undefined,
     search: search || undefined,
+    dateRangeType,
     userId,
   });
+
   const appointments = data?.data ?? [];
   const meta = data?.meta;
 
@@ -160,7 +199,24 @@ export function AppointmentList({
     }
   };
 
+  const toggleStatus = (status: string) => {
+    const newStatuses = statuses.includes(status)
+      ? statuses.filter((s) => s !== status)
+      : [...statuses, status];
+    setStatuses(newStatuses);
+  };
+
+  const selectAllStatuses = () => {
+    setStatuses([...allStatuses]);
+  };
+
+  const clearAllStatuses = () => {
+    setStatuses([]);
+  };
+
   const totalPages = meta?.totalPages || 1;
+  const hasActiveFilters =
+    search || statuses.length > 0 || dateRangeType !== "all";
 
   if (error) {
     return (
@@ -176,37 +232,152 @@ export function AppointmentList({
   return (
     <div className="space-y-4">
       {showFilters && (
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="relative flex-1 max-w-sm">
+        <div className="flex flex-col gap-4">
+          {/* Search Bar */}
+          <div className="relative">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search appointments..."
-              value={search}
+              placeholder="Search appointments by title, description, or location..."
+              value={searchInput}
               onChange={(e) => {
-                setSearchValue(e.target.value);
+                setSearchInput(e.target.value);
+                if (onSearchChange) {
+                  onSearchChange(e.target.value);
+                }
               }}
-              className="pl-9"
+              className="pl-9 pr-9"
             />
+            {searchInput && (
+              <button
+                onClick={() => {
+                  clearSearch();
+                  if (onSearchChange) {
+                    onSearchChange("");
+                  }
+                }}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
-            <Select
-              value={status}
-              onValueChange={(value: AppointmentStatus | "all") => {
-                setStatus(value);
-              }}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="All statuses" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="SCHEDULED">Scheduled</SelectItem>
-                <SelectItem value="COMPLETED">Completed</SelectItem>
-                <SelectItem value="CANCELLED">Cancelled</SelectItem>
-                <SelectItem value="NO_SHOW">No Show</SelectItem>
-              </SelectContent>
-            </Select>
+
+          {/* Filters Row */}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap gap-2 items-center">
+              {/* Date Range Quick Filters */}
+              <Select
+                value={dateRangeType}
+                onValueChange={(value: "upcoming" | "past" | "all") => {
+                  setDateRangeType(value);
+                }}
+              >
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="Date range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All dates</SelectItem>
+                  <SelectItem value="upcoming">Upcoming</SelectItem>
+                  <SelectItem value="past">Past</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Status Multi-Select */}
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="min-w-[140px] justify-between"
+                  >
+                    <Filter className="h-4 w-4 mr-2" />
+                    {statuses.length === 0
+                      ? "All statuses"
+                      : statuses.length === allStatuses.length
+                        ? "All selected"
+                        : `${statuses.length} selected`}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[200px]" align="start">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        Filter by status
+                      </span>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={selectAllStatuses}
+                          className="h-6 px-2 text-xs"
+                        >
+                          Select all
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={clearAllStatuses}
+                          className="h-6 px-2 text-xs"
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="space-y-1">
+                      {allStatuses.map((status) => (
+                        <div
+                          key={status}
+                          className="flex items-center space-x-2"
+                        >
+                          <Checkbox
+                            id={`status-${status}`}
+                            checked={statuses.includes(status)}
+                            onCheckedChange={() => toggleStatus(status)}
+                          />
+                          <label
+                            htmlFor={`status-${status}`}
+                            className="text-sm leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                          >
+                            {status.charAt(0) +
+                              status.slice(1).toLowerCase().replace("_", " ")}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </PopoverContent>
+              </Popover>
+
+              {/* Clear Filters */}
+              {hasActiveFilters && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    clearSearch();
+                    setStatuses([]);
+                    setDateRangeType("all");
+                    if (onSearchChange) onSearchChange("");
+                    if (onStatusesChange) onStatusesChange([]);
+                    if (onDateRangeTypeChange) onDateRangeTypeChange("all");
+                  }}
+                  className="text-muted-foreground"
+                  aria-label="Clear all filters"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Clear filters
+                </Button>
+              )}
+            </div>
+
+            {/* Results Count */}
+            {meta?.total !== undefined && (
+              <div className="text-sm text-muted-foreground">
+                {meta.total} {meta.total === 1 ? "appointment" : "appointments"}
+                {search && (
+                  <span className="ml-1">for &ldquo;{search}&rdquo;</span>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -245,6 +416,11 @@ export function AppointmentList({
                         {appointment.description && (
                           <p className="text-sm text-muted-foreground line-clamp-1">
                             {appointment.description}
+                          </p>
+                        )}
+                        {appointment.user && (
+                          <p className="text-xs text-muted-foreground">
+                            {appointment.user.email}
                           </p>
                         )}
                       </div>
@@ -374,6 +550,7 @@ export function AppointmentList({
             </Table>
           </div>
 
+          {/* Pagination */}
           {totalPages > 1 && (
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted-foreground">
@@ -425,7 +602,7 @@ export function AppointmentList({
           <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
           <p className="text-lg font-medium">No appointments found</p>
           <p className="text-muted-foreground">
-            {search || status
+            {hasActiveFilters
               ? "Try adjusting your filters"
               : "Create your first appointment to get started"}
           </p>

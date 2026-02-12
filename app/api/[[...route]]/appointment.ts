@@ -10,6 +10,12 @@ import {
   sendAppointmentRescheduledAsync,
   sendAppointmentCancelledAsync,
 } from "@/features/mail/lib/appointment";
+import {
+  notifyAppointmentCreated,
+  notifyAppointmentRescheduled,
+  notifyAppointmentCancelled,
+  notifyAppointmentCompleted,
+} from "@/lib/services/notifications";
 
 // ============================================
 // TYPES & INTERFACES
@@ -86,10 +92,13 @@ const statusUpdateSchema = z.object({
 const listQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
   limit: z.coerce.number().int().positive().max(100).default(10),
-  status: z.enum(["SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]).optional(),
+  status: z.string().optional(), // Comma-separated statuses for multi-select
+  statuses: z.string().optional(), // Alternative: comma-separated statuses
   search: z.string().optional(),
+  searchFields: z.string().optional().default("title,description"), // Fields to search in
   startDate: z.iso.datetime().optional(),
   endDate: z.iso.datetime().optional(),
+  dateRangeType: z.enum(["upcoming", "past", "all"]).optional().default("all"),
   userId: z.string().optional(),
 });
 
@@ -97,6 +106,7 @@ const exportQuerySchema = z.object({
   startDate: z.iso.datetime().optional(),
   endDate: z.iso.datetime().optional(),
   status: z.enum(["SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]).optional(),
+  format: z.enum(["csv", "json"]).optional().default("csv"),
 });
 
 // ============================================
@@ -114,7 +124,7 @@ async function getSessionUser(c: Context) {
 
   const session = await auth.api.getSession({
     headers,
-   });
+  });
 
   if (!session?.user) {
     return null;
@@ -181,22 +191,48 @@ const app = new Hono()
         );
       }
 
-      const { page, limit, status, search, startDate, endDate, userId } =
-        c.req.valid("query");
+      const {
+        page,
+        limit,
+        status,
+        statuses,
+        search,
+        searchFields,
+        startDate,
+        endDate,
+        dateRangeType,
+        userId,
+      } = c.req.valid("query");
 
       const isAdminUser = await isAdmin(sessionUser.id);
       const actualUserId = isAdminUser && userId ? userId : sessionUser.id;
+
+      // Parse multi-status from comma-separated string
+      const statusList = statuses || status;
+      const statusArray = statusList
+        ? statusList
+            .split(",")
+            .filter((s: string) =>
+              ["SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"].includes(s),
+            )
+        : undefined;
 
       const where: Record<string, unknown> = {
         userId: actualUserId,
         deletedAt: null,
       };
 
-      if (status) {
-        where.status = status;
+      // Multi-status filter
+      if (statusArray && statusArray.length > 0) {
+        where.status = { in: statusArray };
       }
 
-      if (startDate || endDate) {
+      // Date range filter
+      if (dateRangeType === "upcoming") {
+        where.startDateTime = { gte: new Date() };
+      } else if (dateRangeType === "past") {
+        where.startDateTime = { lt: new Date() };
+      } else if (startDate || endDate) {
         where.startDateTime = {};
         if (startDate)
           (where.startDateTime as Record<string, Date>).gte = new Date(
@@ -206,11 +242,55 @@ const app = new Hono()
           (where.startDateTime as Record<string, Date>).lte = new Date(endDate);
       }
 
+      // Enhanced search across multiple fields
       if (search) {
-        where.OR = [
+        const searchFieldsArray = searchFields
+          .split(",")
+          .map((f: string) => f.trim());
+        const searchConditions: Prisma.AppointmentWhereInput[] = [];
+
+        // Always search in title and description
+        searchConditions.push(
           { title: { contains: search, mode: "insensitive" } },
           { description: { contains: search, mode: "insensitive" } },
-        ];
+        );
+
+        // Search in additional fields if specified
+        if (searchFieldsArray.includes("location")) {
+          searchConditions.push({
+            location: { contains: search, mode: "insensitive" },
+          });
+        }
+        if (
+          searchFieldsArray.includes("notes") ||
+          searchFieldsArray.includes("all")
+        ) {
+          // Notes field doesn't exist, but could be extended
+        }
+
+        // Admin-only: search by user email
+        if (
+          isAdminUser &&
+          (searchFieldsArray.includes("email") ||
+            searchFieldsArray.includes("all"))
+        ) {
+          // This requires a different approach - use relation query
+          where.AND = [
+            {
+              user: {
+                OR: [
+                  { email: { contains: search, mode: "insensitive" } },
+                  { name: { contains: search, mode: "insensitive" } },
+                ],
+              },
+            },
+          ];
+        }
+
+        // Add OR condition for text search (unless admin email search is used)
+        if (!isAdminUser || !searchFieldsArray.includes("email")) {
+          where.OR = searchConditions;
+        }
       }
 
       if (!isAdminUser && userId && userId !== sessionUser.id) {
@@ -251,6 +331,16 @@ const app = new Hono()
             createdAt: true,
             updatedAt: true,
             userId: true,
+            // Include user info for admin email search results
+            user: isAdminUser
+              ? {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                }
+              : false,
           },
         }),
         prisma.appointment.count({ where }),
@@ -469,6 +559,19 @@ const app = new Hono()
         });
       }
 
+      // Send in-app notification asynchronously
+      notifyAppointmentCreated({
+        userId: sessionUser.id,
+        appointmentId: appointment.id,
+        appointmentTitle: appointment.title,
+        startDateTime: appointment.startDateTime,
+      }).catch((error) => {
+        console.error(
+          "[Appointment] Failed to send in-app notification:",
+          error,
+        );
+      });
+
       return jsonResponse(
         c,
         {
@@ -680,6 +783,19 @@ const app = new Hono()
               error,
             );
           });
+
+          // Send in-app notification
+          notifyAppointmentRescheduled({
+            userId: sessionUser.id,
+            appointmentId: id,
+            appointmentTitle: existingAppointment.title,
+            newStartDateTime: updatedAppointment.startDateTime,
+          }).catch((error) => {
+            console.error(
+              "[Appointment] Failed to send reschedule in-app notification:",
+              error,
+            );
+          });
         }
 
         return jsonResponse(c, {
@@ -792,6 +908,19 @@ const app = new Hono()
       sendAppointmentCancelledAsync(id, "Deleted by user").catch((error) => {
         console.error(
           "[Appointment] Failed to send cancellation notification:",
+          error,
+        );
+      });
+
+      // Send in-app notification
+      notifyAppointmentCancelled({
+        userId: sessionUser.id,
+        appointmentId: id,
+        appointmentTitle: existingAppointment.title,
+        reason: "Deleted by user",
+      }).catch((error) => {
+        console.error(
+          "[Appointment] Failed to send cancellation in-app notification:",
           error,
         );
       });
@@ -960,6 +1089,33 @@ const app = new Hono()
               error,
             );
           });
+
+          // Send in-app notification
+          notifyAppointmentCancelled({
+            userId: sessionUser.id,
+            appointmentId: id,
+            appointmentTitle: existingAppointment.title,
+            reason,
+          }).catch((error) => {
+            console.error(
+              "[Appointment] Failed to send cancellation in-app notification:",
+              error,
+            );
+          });
+        }
+
+        // Send completion notification if status is COMPLETED
+        if (status === "COMPLETED") {
+          notifyAppointmentCompleted({
+            userId: sessionUser.id,
+            appointmentId: id,
+            appointmentTitle: existingAppointment.title,
+          }).catch((error) => {
+            console.error(
+              "[Appointment] Failed to send completion in-app notification:",
+              error,
+            );
+          });
         }
 
         return jsonResponse(c, {
@@ -1012,7 +1168,7 @@ const app = new Hono()
         );
       }
 
-      const { startDate, endDate, status } = c.req.valid("query");
+      const { startDate, endDate, status, format } = c.req.valid("query");
 
       const where: Record<string, unknown> = {
         deletedAt: null,
@@ -1040,68 +1196,68 @@ const app = new Hono()
           title: true,
           description: true,
           startDateTime: true,
-          endDateTime: true,
-          duration: true,
           status: true,
-          location: true,
-          meetingUrl: true,
-          emailNotificationSent: true,
-          reminderSent: true,
-          reminderSentAt: true,
-          cancelledAt: true,
-          cancelReason: true,
           createdAt: true,
-          updatedAt: true,
-          userId: true,
+          user: {
+            select: {
+              email: true,
+              name: true,
+            },
+          },
         },
       });
 
-      const headers = [
-        "ID",
-        "Title",
-        "Description",
-        "Start DateTime",
-        "End DateTime",
-        "Duration (min)",
-        "Status",
-        "Location",
-        "Meeting URL",
-        "Email Notification",
-        "Reminder Sent",
-        "Reminder Sent At",
-        "Cancelled At",
-        "Cancel Reason",
-        "Created At",
-        "Updated At",
-        "User ID",
+      // Format appointment data for export
+      const exportData = appointments.map((apt) => ({
+        id: apt.id,
+        title: apt.title,
+        description: apt.description || "",
+        date: apt.startDateTime.toISOString().split("T")[0],
+        time: apt.startDateTime.toISOString().split("T")[1].substring(0, 5),
+        status: apt.status,
+        userEmail: apt.user.email,
+        userName: apt.user.name || "",
+        createdAt: apt.createdAt.toISOString(),
+      }));
+
+      // Generate CSV with required columns
+      const csvHeaders = [
+        "id",
+        "title",
+        "description",
+        "date",
+        "time",
+        "status",
+        "userEmail",
+        "userName",
+        "createdAt",
       ];
+      const csvRows = [csvHeaders.join(",")];
 
-      const csvRows = [headers.join(",")];
-
-      for (const apt of appointments) {
+      for (const apt of exportData) {
         const row = [
           apt.id,
           `"${apt.title.replace(/"/g, '""')}"`,
           apt.description ? `"${apt.description.replace(/"/g, '""')}"` : "",
-          apt.startDateTime.toISOString(),
-          apt.endDateTime.toISOString(),
-          apt.duration.toString(),
+          apt.date,
+          apt.time,
           apt.status,
-          apt.location || "",
-          apt.meetingUrl || "",
-          apt.emailNotificationSent.toString(),
-          apt.reminderSent.toString(),
-          apt.reminderSentAt?.toISOString() || "",
-          apt.cancelledAt?.toISOString() || "",
-          apt.cancelReason || "",
-          apt.createdAt.toISOString(),
-          apt.updatedAt.toISOString(),
-          apt.userId,
+          apt.userEmail,
+          apt.userName ? `"${apt.userName.replace(/"/g, '""')}"` : "",
+          apt.createdAt,
         ];
         csvRows.push(row.join(","));
       }
 
       const csv = csvRows.join("\n");
+
+      // Return CSV or JSON based on format
+      if (format === "json") {
+        return c.json(exportData, 200, {
+          "Content-Type": "application/json",
+          "Content-Disposition": `attachment; filename="appointments-export-${new Date().toISOString().split("T")[0]}.json"`,
+        });
+      }
 
       await createAuditLog({
         action: "VIEW",

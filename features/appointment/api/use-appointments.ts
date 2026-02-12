@@ -30,15 +30,24 @@ export interface Appointment {
   createdAt: string;
   updatedAt: string;
   userId: string;
+  // User info for admin searches
+  user?: {
+    id: string;
+    name: string | null;
+    email: string | null;
+  } | null;
 }
 
 export interface AppointmentListParams {
   page?: number;
   limit?: number;
-  status?: AppointmentStatus;
+  status?: AppointmentStatus | "all" | undefined;
+  statuses?: string; // Comma-separated statuses for multi-select
   search?: string;
+  searchFields?: string; // Fields to search in: "title,description", "title,description,location", "all", "email"
   startDate?: string;
   endDate?: string;
+  dateRangeType?: "upcoming" | "past" | "all";
   userId?: string;
 }
 
@@ -104,9 +113,12 @@ export function useAppointments(params: AppointmentListParams = {}) {
           page: params.page?.toString(),
           limit: params.limit?.toString(),
           status: params.status,
+          statuses: params.statuses,
           search: params.search,
+          searchFields: params.searchFields,
           startDate: params.startDate,
           endDate: params.endDate,
+          dateRangeType: params.dateRangeType,
           userId: params.userId,
         },
       });

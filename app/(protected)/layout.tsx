@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import Link from "next/link";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -31,7 +30,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   all: "All",
 };
 
-function BreadcrumbHandler({ children }: { children: React.ReactNode }) {
+function BreadcrumbHandler() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const status = searchParams.get("status");
@@ -106,7 +105,7 @@ export default function AppointmentsLayout({
                 </div>
               }
             >
-              <BreadcrumbHandler>{children}</BreadcrumbHandler>
+              <BreadcrumbHandler />
             </React.Suspense>
           </div>
         </header>

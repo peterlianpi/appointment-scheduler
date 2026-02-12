@@ -6,10 +6,10 @@ import { sendBulkReminders } from "@/features/mail/lib/appointment";
  * Reminder Cron Job API
  *
  * This endpoint is designed to be called by a cron job scheduler.
- * It sends reminder emails for appointments scheduled in the next 24 hours.
+ * It sends reminder emails and in-app notifications for appointments based on user preferences.
  *
  * Cron schedule suggestion: Run once per hour to catch appointments
- * that will be due in exactly 24 hours.
+ * that will be due in the reminder window.
  *
  * Example cron expression: "0 * * * *" (every hour at minute 0)
  *
@@ -72,6 +72,8 @@ const app = new Hono()
           totalAppointmentsFound: result.total,
           remindersSent: result.sent,
           remindersFailed: result.failed,
+          emailsSent: result.emailsSent,
+          inAppNotificationsSent: result.inAppSent,
           timestamp: new Date().toISOString(),
         },
       });
@@ -95,10 +97,12 @@ const app = new Hono()
   // Also support POST for cron systems that use POST requests
   .post("/", async (c) => {
     // Same logic as GET, just different HTTP method
+    const enableSecretCheck = process.env.ENABLE_CRON_SECRET_CHECK === "true";
     const cronSecret = process.env.CRON_SECRET;
     const requestSecret = c.req.header("x-cron-secret");
 
-    if (cronSecret && requestSecret !== cronSecret) {
+    // Only validate secret if check is enabled and secret is configured
+    if (enableSecretCheck && cronSecret && requestSecret !== cronSecret) {
       console.warn("[Cron] Unauthorized reminder job attempt (POST)");
       return c.json(
         {
@@ -141,6 +145,8 @@ const app = new Hono()
           totalAppointmentsFound: result.total,
           remindersSent: result.sent,
           remindersFailed: result.failed,
+          emailsSent: result.emailsSent,
+          inAppNotificationsSent: result.inAppSent,
           timestamp: new Date().toISOString(),
         },
       });

@@ -7,6 +7,10 @@ import {
   generateAppointmentCancelledEmail,
   type AppointmentEmailData,
 } from "../components/templates";
+import {
+  notifyAppointmentReminder,
+  getUserPreferences,
+} from "@/lib/services/notifications";
 
 /**
  * Get appointment with user data for email templates
@@ -216,12 +220,16 @@ export async function sendAppointmentCancelled(
 }
 
 /**
- * Send bulk reminders for appointments in the next 24 hours
+ * Send bulk reminders for appointments based on user preferences
  * This function is designed to be called by a cron job
  *
  * Options:
  * - testMode: If set, sends all reminders to this email address instead of user emails
  * - testIntervalMinutes: In test mode, looks for appointments in the next X minutes (default: 5)
+ *
+ * Features:
+ * - Supports configurable reminder times per user (1 hour, 24 hours, etc.)
+ * - Sends both email and in-app notifications based on user preferences
  */
 export async function sendBulkReminders(options?: {
   testMode?: string;
@@ -230,6 +238,8 @@ export async function sendBulkReminders(options?: {
   total: number;
   sent: number;
   failed: number;
+  emailsSent: number;
+  inAppSent: number;
 }> {
   console.log(`[AppointmentMail] Starting bulk reminder job...`);
 
@@ -249,15 +259,12 @@ export async function sendBulkReminders(options?: {
       `[AppointmentMail] TEST MODE: Looking for appointments between ${startWindow.toISOString()} and ${endWindow.toISOString()}`,
     );
   } else {
-    // Normal mode: look for appointments in the next 23-24 hours (24 hours before reminder)
-    const twentyThreeHoursFromNow = new Date(
-      now.getTime() + 23 * 60 * 60 * 1000,
-    );
-    const twentyFourHoursFromNow = new Date(
-      now.getTime() + 24 * 60 * 60 * 1000,
-    );
-    startWindow = twentyThreeHoursFromNow;
-    endWindow = twentyFourHoursFromNow;
+    // Normal mode: look for appointments in the next 1-2 hours by default
+    // This will catch appointments at various reminder intervals
+    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
+    startWindow = oneHourFromNow;
+    endWindow = twoHoursFromNow;
   }
 
   try {
@@ -286,20 +293,56 @@ export async function sendBulkReminders(options?: {
 
     let sent = 0;
     let failed = 0;
+    let emailsSent = 0;
+    let inAppSent = 0;
 
     for (const appointment of appointmentsToRemind) {
       try {
+        // Get user preferences for this appointment
+        const preferences = await getUserPreferences(appointment.userId);
+
+        // Check if reminders are enabled for this user
+        if (!preferences.reminderEnabled) {
+          console.log(
+            `[AppointmentMail] Reminders disabled for user ${appointment.userId}, skipping appointment ${appointment.id}`,
+          );
+          continue;
+        }
+
         const emailData = buildEmailData(appointment);
         const { subject, html } = generateAppointmentReminderEmail(emailData);
 
-        // In test mode, send to the test email; otherwise send to user's email
-        const recipientEmail = testMode || appointment.user.email;
+        // Send email reminder if enabled
+        if (preferences.emailReminders) {
+          // In test mode, send to the test email; otherwise send to user's email
+          const recipientEmail = testMode || appointment.user.email;
 
-        await sendEmail({
-          to: recipientEmail,
-          subject,
-          html,
-        });
+          await sendEmail({
+            to: recipientEmail,
+            subject,
+            html,
+          });
+
+          emailsSent++;
+          console.log(
+            `[AppointmentMail] Email reminder sent for appointment: ${appointment.id}`,
+          );
+        }
+
+        // Send in-app notification if enabled
+        if (preferences.inAppReminders) {
+          await notifyAppointmentReminder({
+            userId: appointment.userId,
+            appointmentId: appointment.id,
+            appointmentTitle: appointment.title,
+            startDateTime: appointment.startDateTime,
+          });
+
+          inAppSent++;
+          console.log(
+            `[AppointmentMail] In-app reminder sent for appointment: ${appointment.id}`,
+          );
+        }
 
         // Only mark reminder as sent in normal mode (not test mode)
         if (!testMode) {
@@ -317,9 +360,6 @@ export async function sendBulkReminders(options?: {
         }
 
         sent++;
-        console.log(
-          `[AppointmentMail] Reminder sent for appointment: ${appointment.id}`,
-        );
       } catch (error) {
         failed++;
         console.error(
@@ -330,13 +370,15 @@ export async function sendBulkReminders(options?: {
     }
 
     console.log(
-      `[AppointmentMail] Bulk reminder job completed. Total: ${appointmentsToRemind.length}, Sent: ${sent}, Failed: ${failed}`,
+      `[AppointmentMail] Bulk reminder job completed. Total: ${appointmentsToRemind.length}, Sent: ${sent}, Failed: ${failed}, Emails: ${emailsSent}, InApp: ${inAppSent}`,
     );
 
     return {
       total: appointmentsToRemind.length,
       sent,
       failed,
+      emailsSent,
+      inAppSent,
     };
   } catch (error) {
     console.error(`[AppointmentMail] Bulk reminder job failed:`, error);

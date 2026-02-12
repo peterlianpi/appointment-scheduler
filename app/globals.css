@@ -120,4 +120,16 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  /* Focus ring utilities - consistent across all components */
+  *:focus-visible {
+    outline: none;
+  }
+
+  /* Remove default browser outline, rely on custom ring styles */
+  :where(button, [role="button"]):focus,
+  :where(input, select, textarea):focus,
+  :where(a):focus {
+    outline: none;
+  }
 }

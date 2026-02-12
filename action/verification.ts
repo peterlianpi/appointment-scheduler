@@ -1,8 +1,6 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { revalidatePath } from "next/cache";
-import { toast } from "sonner";
 
 /**
  * Server action to send verification email using Better Auth's server API.
@@ -48,7 +46,7 @@ export async function sendVerificationEmailAction(email: string) {
 /**
  * Server action to check verification status
  */
-export async function checkVerificationStatus(email: string) {
+export async function checkVerificationStatus(_email: string) {
   try {
     const session = await auth.api.getSession({
       headers: new Headers(),

@@ -72,11 +72,12 @@ model User {
   deletedAt DateTime?
 
   // Relationships
-  sessions      Session[]
-  accounts      Account[]
-  appointments  Appointment[]  @relation("UserAppointments")
-  auditLogs     AuditLog[]     @relation("AuditLogsCreated")
-  notifications Notification[]
+  sessions        Session[]
+  accounts        Account[]
+  appointments    Appointment[]    @relation("UserAppointments")
+  auditLogs       AuditLog[]       @relation("AuditLogsCreated")
+  notifications   Notification[]
+  userPreferences UserPreferences?
 
   // Indexes
   @@unique([email])
@@ -273,6 +274,38 @@ model Notification {
   @@index([userId, read])
   @@index([createdAt])
   @@map("notification")
+}
+
+// ============================================
+// USER PREFERENCES MODEL
+// ============================================
+
+model UserPreferences {
+  // Primary identifier
+  id String @id @default(cuid())
+
+  // User relationship
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Reminder preferences
+  reminderEnabled     Boolean @default(true)
+  reminderHoursBefore Int     @default(24) // Hours before appointment to send reminder
+  emailReminders      Boolean @default(true)
+  inAppReminders      Boolean @default(true)
+
+  // Notification preferences
+  appointmentCreatedNotif     Boolean @default(true)
+  appointmentRescheduledNotif Boolean @default(true)
+  appointmentCancelledNotif   Boolean @default(true)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Indexes
+  @@index([userId])
+  @@map("user_preferences")
 }
 
 // ==========================================

@@ -1,5 +1,5 @@
-import { useQuery } from "@tanstack/react-query";
-import { client, AdminStatsResponse } from "@/lib/api/hono-client";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { client, AdminStatsResponse, adminExportAppointments, AdminExportParams } from "@/lib/api/hono-client";
 
 // ============================================
 // Query Keys
@@ -30,6 +30,18 @@ export function useAdminStats() {
       }
       const data = await res.json();
       return data as AdminStatsResponse;
+    },
+  });
+}
+
+// ============================================
+// Mutations
+// ============================================
+
+export function useExportAppointments() {
+  return useMutation({
+    mutationFn: async (params?: AdminExportParams) => {
+      await adminExportAppointments(params);
     },
   });
 }

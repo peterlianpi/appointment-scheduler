@@ -4,8 +4,8 @@ export const authClient = createAuthClient({
   /** The base URL of the server (optional if you're using the same domain) */
   baseURL: process.env.NEXT_BETTER_APP_URL,
   plugins: [
-    // Username-based login
-    emailOTPClient(), // Email OTP authentication
+    // Email OTP authentication
+    emailOTPClient(),
     adminClient(),
   ],
 });

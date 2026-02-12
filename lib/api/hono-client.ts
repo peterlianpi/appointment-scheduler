@@ -11,10 +11,11 @@ export interface ExportAppointmentsParams {
   startDate?: string;
   endDate?: string;
   status?: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
+  format?: "csv" | "json";
 }
 
 /**
- * Response type for appointment export - returns a CSV blob
+ * Response type for appointment export - returns a blob
  */
 export type ExportAppointmentsResponse = Blob;
 
@@ -30,6 +31,7 @@ export async function exportAppointments(
   if (params?.startDate) query.startDate = params.startDate;
   if (params?.endDate) query.endDate = params.endDate;
   if (params?.status) query.status = params.status;
+  if (params?.format) query.format = params.format;
 
   const response = await client.api.appointment.export.$get({ query });
 
@@ -43,9 +45,64 @@ export async function exportAppointments(
   // Create download link and trigger download
   const contentDisposition = response.headers.get("Content-Disposition");
   const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+  const extension = params?.format === "json" ? "json" : "csv";
   const filename =
     filenameMatch?.[1] ||
-    `appointments-export-${new Date().toISOString().split("T")[0]}.csv`;
+    `appointments-export-${new Date().toISOString().split("T")[0]}.${extension}`;
+
+  const downloadUrl = window.URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = downloadUrl;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  window.URL.revokeObjectURL(downloadUrl);
+}
+
+// ============================================
+// Admin Export Types
+// ============================================
+
+export interface AdminExportParams {
+  startDate?: string;
+  endDate?: string;
+  status?: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
+  format?: "csv" | "json";
+}
+
+// ============================================
+// Admin Export Helper
+// ============================================
+
+export async function adminExportAppointments(
+  params?: AdminExportParams,
+): Promise<void> {
+  // Build query object for the admin export endpoint
+  const query: Record<string, string> = {};
+  if (params?.startDate) query.startDate = params.startDate;
+  if (params?.endDate) query.endDate = params.endDate;
+  if (params?.status) query.status = params.status;
+  if (params?.format) query.format = params.format;
+
+  const response = await client.api.admin["export-appointments"].$get({
+    query,
+  });
+
+  if (!response.ok) {
+    const error = (await response.json()) as { error?: { message?: string } };
+    throw new Error(error?.error?.message || "Failed to export appointments");
+  }
+
+  const blob = await response.blob();
+
+  // Create download link and trigger download
+  const contentDisposition = response.headers.get("Content-Disposition");
+  const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
+  const extension = params?.format === "json" ? "json" : "csv";
+  const filename =
+    filenameMatch?.[1] ||
+    `appointments-export-${new Date().toISOString().split("T")[0]}.${extension}`;
 
   const downloadUrl = window.URL.createObjectURL(blob);
   const link = document.createElement("a");
@@ -68,6 +125,11 @@ export interface AdminStatsResponse {
     totalAppointments: number;
     upcomingAppointments: number;
     completedAppointments: number;
+    cancelledAppointments: number;
+    noShowAppointments: number;
+    completionRate: number;
+    cancellationRate: number;
+    noShowRate: number;
   };
 }
 

@@ -17,7 +17,7 @@ import {
 import { FieldGroup } from "@/components/ui/field";
 import { toast } from "sonner";
 import { PasswordInput } from "@/features/auth/components/password-input";
-import { ArrowLeft, CheckCircle2, Lock, Shield } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Shield } from "lucide-react";
 import Link from "next/link";
 
 // ============================================
@@ -27,7 +27,16 @@ import Link from "next/link";
 const changePasswordSchema = z
   .object({
     currentPassword: z.string().min(1, "Current password is required"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    password: z
+      .string()
+      .min(12, "Password must be at least 12 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number")
+      .regex(
+        /[^A-Za-z0-9]/,
+        "Password must contain at least one special character",
+      ),
     confirmPassword: z.string().min(1, "Please confirm your password"),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -46,7 +55,6 @@ type ChangePasswordValues = z.infer<typeof changePasswordSchema>;
 // ============================================
 
 export default function ChangePasswordPage() {
-  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -106,8 +114,8 @@ export default function ChangePasswordPage() {
               </div>
               <CardTitle>Password Changed Successfully</CardTitle>
               <CardDescription>
-                Your password has been updated. If you&apos;re logged in on other
-                devices, you may need to log in again.
+                Your password has been updated. If you&apos;re logged in on
+                other devices, you may need to log in again.
               </CardDescription>
             </CardHeader>
             <CardContent className="flex justify-center">
