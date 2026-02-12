@@ -3,6 +3,28 @@ import type { AppType } from "@/app/api/[[...route]]/route";
 
 export const client = hc<AppType>("");
 
+/**
+ * Check if the current user has admin role using Hono RPC
+ */
+export async function checkAdminRole(): Promise<boolean> {
+  try {
+    const response = await client.api["check-role"].$get();
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const data = (await response.json()) as {
+      success: boolean;
+      isAdmin: boolean;
+    };
+    return data.success && data.isAdmin === true;
+  } catch (error) {
+    console.error("[checkAdminRole] Error:", error);
+    return false;
+  }
+}
+
 // ============================================
 // Appointment Export Types
 // ============================================
@@ -112,6 +134,38 @@ export async function adminExportAppointments(
   link.click();
   document.body.removeChild(link);
   window.URL.revokeObjectURL(downloadUrl);
+}
+
+// ============================================
+// Send Reminder Types
+// ============================================
+
+export interface SendReminderParams {
+  appointmentId: string;
+}
+
+export interface SendReminderResponse {
+  success: boolean;
+  message?: string;
+  error?: {
+    code: string;
+    message: string;
+  };
+}
+
+// ============================================
+// Send Reminder Helper
+// ============================================
+
+export async function sendReminder(params: SendReminderParams): Promise<void> {
+  const response = await client.api.admin["send-reminder"].$post({
+    json: { appointmentId: params.appointmentId },
+  });
+
+  if (!response.ok) {
+    const error = (await response.json()) as SendReminderResponse;
+    throw new Error(error.error?.message || "Failed to send reminder");
+  }
 }
 
 // ============================================

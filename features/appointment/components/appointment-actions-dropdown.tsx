@@ -1,6 +1,6 @@
 "use client";
 
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -20,10 +20,12 @@ interface AppointmentActionsDropdownProps {
   appointment: Appointment;
   isUpdating?: boolean;
   isDeleting?: boolean;
+  isSendingReminder?: boolean;
   onView?: (appointment: Appointment) => void;
   onEdit?: (appointment: Appointment) => void;
   onStatusChange?: (id: string, status: UpdateAppointmentStatus) => void;
   onDelete?: (id: string) => void;
+  onSendReminder?: (id: string) => void;
   variant?: "card" | "table";
 }
 
@@ -31,13 +33,16 @@ export function AppointmentActionsDropdown({
   appointment,
   isUpdating = false,
   isDeleting = false,
+  isSendingReminder = false,
   onView,
   onEdit,
   onStatusChange,
   onDelete,
+  onSendReminder,
   variant = "card",
 }: AppointmentActionsDropdownProps) {
   const isScheduled = appointment.status === "SCHEDULED";
+  const showReminderOption = !!onSendReminder && isScheduled && !appointment.reminderSent;
 
   const handleViewClick = () => {
     onView?.(appointment);
@@ -53,6 +58,10 @@ export function AppointmentActionsDropdown({
 
   const handleDeleteClick = () => {
     onDelete?.(appointment.id);
+  };
+
+  const handleSendReminderClick = () => {
+    onSendReminder?.(appointment.id);
   };
 
   const showStatusChangeOptions = isScheduled;
@@ -79,6 +88,27 @@ export function AppointmentActionsDropdown({
           View details
         </DropdownMenuItem>
         <DropdownMenuItem onClick={handleEditClick}>Edit</DropdownMenuItem>
+        {showReminderOption && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={handleSendReminderClick}
+              disabled={isSendingReminder}
+            >
+              {isSendingReminder ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                  Sending reminder...
+                </>
+              ) : (
+                <>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Send Reminder
+                </>
+              )}
+            </DropdownMenuItem>
+          </>
+        )}
         {showStatusChangeOptions && (
           <>
             <DropdownMenuSeparator />

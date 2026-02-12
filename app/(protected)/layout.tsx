@@ -19,6 +19,7 @@ import {
 import { AppSidebar } from "@/features/nav/components/app-sidebar";
 import { ModeToggle } from "@/features/nav/components/theme-toggle";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
+import { AdminSwitch } from "@/features/nav/components/admin-switch";
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -75,7 +76,7 @@ function BreadcrumbHandler() {
         </BreadcrumbList>
       </Breadcrumb>
       <div className="flex items-center gap-2">
-        <NotificationBell />
+        <AdminSwitch /> <NotificationBell />
         <ModeToggle />
       </div>
     </>

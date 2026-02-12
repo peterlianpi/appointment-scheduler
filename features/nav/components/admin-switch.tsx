@@ -2,8 +2,8 @@
 
 import { Shield, ShieldAlert } from "lucide-react";
 import { useRouter, usePathname } from "next/navigation";
-import { useSession, authClient } from "@/lib/auth-client";
-import { useEffect, useState } from "react";
+import { useSession } from "@/lib/auth-client";
+import { useEffect, useState, useCallback } from "react";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import {
@@ -13,6 +13,27 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
+import { checkAdminRole } from "@/lib/api/hono-client";
+
+/**
+ * Check if the current user has admin role using Hono RPC
+ */
+async function checkIsAdminUser(
+  session: ReturnType<typeof useSession>["data"],
+): Promise<boolean> {
+  if (!session?.user?.id) {
+    return false;
+  }
+
+  try {
+    // Use Hono RPC to check admin role
+    const isAdmin = await checkAdminRole();
+    return isAdmin;
+  } catch (error) {
+    console.error("[AdminSwitch] Error checking admin permission:", error);
+    return false;
+  }
+}
 
 export function AdminSwitch() {
   const router = useRouter();
@@ -20,42 +41,45 @@ export function AdminSwitch() {
   const { data: session } = useSession();
   const [isAdmin, setIsAdmin] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isNavigating, setIsNavigating] = useState(false);
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
 
-  useEffect(() => {
-    const checkAdminPermission = async () => {
-      try {
-        // Use Better Auth's admin client for permission checking
-        const { data } = await authClient.admin.hasPermission({
-          permissions: {
-            user: ["ban", "delete", "impersonate", "set-role", "set-password", "list"],
-            session: ["list", "revoke", "delete"],
-          },
-        });
-        setIsAdmin(data?.success ?? false);
-      } catch {
-        setIsAdmin(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  // Check if we're on any admin page (including nested routes)
+  const isAdminPage = pathname.startsWith("/admin");
 
-    if (session?.user) {
-      checkAdminPermission();
-    } else {
+  // Check admin status - use callback to avoid stale closure
+  const checkAdmin = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const adminStatus = await checkIsAdminUser(session);
+      setIsAdmin(adminStatus);
+    } catch (error) {
+      console.error("[AdminSwitch] Failed to check admin status:", error);
+      setIsAdmin(false);
+    } finally {
       setIsLoading(false);
     }
-  }, [session]);
+  }, [session?.user?.id]);
 
-  const isAdminPage = pathname === "/admin";
+  useEffect(() => {
+    if (session?.user) {
+      checkAdmin();
+    } else {
+      setIsAdmin(false);
+      setIsLoading(false);
+    }
+  }, [session?.user, checkAdmin]);
 
   const handleToggle = (checked: boolean) => {
+    setIsNavigating(true);
     if (checked) {
       router.push("/admin");
     } else {
       router.push("/dashboard");
     }
+    // Reset navigating state after navigation completes
+    setTimeout(() => setIsNavigating(false), 500);
   };
 
   if (isLoading) {
@@ -86,6 +110,7 @@ export function AdminSwitch() {
                 checked={isAdminPage}
                 onCheckedChange={handleToggle}
                 id="admin-switch"
+                disabled={isNavigating}
                 aria-label={
                   isAdminPage ? "Exit Admin Mode" : "Switch to Admin Mode"
                 }
@@ -102,7 +127,10 @@ export function AdminSwitch() {
             <TooltipTrigger asChild>
               <label
                 htmlFor="admin-switch"
-                className="cursor-pointer text-xs font-medium flex items-center gap-1"
+                className={cn(
+                  "cursor-pointer text-xs font-medium flex items-center gap-1",
+                  isNavigating && "opacity-50",
+                )}
               >
                 {isAdminPage ? (
                   <>

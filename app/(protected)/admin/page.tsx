@@ -19,6 +19,7 @@ import {
   useAdminStats,
   useExportAppointments,
 } from "@/features/admin/api/use-admin-stats";
+import { useSendReminder } from "@/features/admin/api/use-admin-actions";
 
 export default function AdminPage() {
   const [showForm, setShowForm] = useState(false);
@@ -26,6 +27,7 @@ export default function AdminPage() {
     useState<Appointment | null>(null);
   const { data: stats, isLoading, error } = useAdminStats();
   const exportMutation = useExportAppointments();
+  const reminderMutation = useSendReminder();
 
   // Export state
   const [exportFormat, setExportFormat] = useState<"csv" | "json">("csv");
@@ -54,6 +56,11 @@ export default function AdminPage() {
       console.error("Export failed:", error);
       alert("Failed to export appointments. Please try again.");
     }
+  };
+
+  // Send reminder functionality
+  const handleSendReminder = (appointmentId: string) => {
+    reminderMutation.mutate(appointmentId);
   };
 
   return (
@@ -98,7 +105,7 @@ export default function AdminPage() {
         {/* Admin Content */}
         <div className="flex-1 rounded-xl bg-muted/50 md:min-h-min">
           <div className="p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
               <div>
                 <h2 className="text-2xl font-bold tracking-tight">
                   Admin Dashboard
@@ -106,31 +113,35 @@ export default function AdminPage() {
                 <p className="text-muted-foreground">
                   Manage all appointments and export data
                 </p>
-                <div className="flex gap-2 pt-4">
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-wrap gap-2 pt-4">
+                  {/* Date Range */}
+                  <div className="flex flex-wrap items-center gap-2">
                     <Input
                       type="date"
                       placeholder="Start Date"
                       value={startDate}
                       onChange={(e) => setStartDate(e.target.value)}
-                      className="w-40"
+                      className="w-full sm:w-40"
                     />
-                    <span className="text-muted-foreground">to</span>
+                    <span className="text-muted-foreground hidden sm:inline">
+                      to
+                    </span>
                     <Input
                       type="date"
                       placeholder="End Date"
                       value={endDate}
                       onChange={(e) => setEndDate(e.target.value)}
-                      className="w-40"
+                      className="w-full sm:w-40"
                     />
                   </div>
+                  {/* Format Select */}
                   <Select
                     value={exportFormat}
                     onValueChange={(value) =>
                       setExportFormat(value as "csv" | "json")
                     }
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue placeholder="Format" />
                     </SelectTrigger>
                     <SelectContent>
@@ -138,16 +149,23 @@ export default function AdminPage() {
                       <SelectItem value="json">JSON</SelectItem>
                     </SelectContent>
                   </Select>
+                  {/* Export Button */}
                   <Button
                     variant="outline"
                     onClick={handleExport}
                     disabled={exportMutation.isPending}
+                    className="w-full sm:w-auto"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     {exportMutation.isPending ? "Exporting..." : "Export"}
                   </Button>
-                  <Button onClick={() => setShowForm(true)}>
-                    <Plus className="h-4 w-4" />
+                  {/* Create Button */}
+                  <Button
+                    onClick={() => setShowForm(true)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create
                   </Button>
                 </div>
               </div>
@@ -160,6 +178,8 @@ export default function AdminPage() {
                 <AppointmentList
                   onEdit={handleEdit}
                   onView={(apt) => console.log("View", apt)}
+                  onSendReminder={handleSendReminder}
+                  isSendingReminder={reminderMutation.isPending}
                   showFilters={true}
                 />
               </div>

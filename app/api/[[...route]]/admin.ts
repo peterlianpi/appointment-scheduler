@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { Hono, type Context } from "hono";
 import { z } from "zod";
 import { zValidator } from "@hono/zod-validator";
+import { sendAppointmentReminder } from "@/features/mail/lib/appointment";
 
 // ============================================
 // TYPES & INTERFACES
@@ -148,15 +149,18 @@ const app = new Hono()
 
       // Calculate rates
       const nonDeletedAppointments = totalAppointments; // Using total as base
-      const completionRate = nonDeletedAppointments > 0 
-        ? (completedAppointments / nonDeletedAppointments) * 100 
-        : 0;
-      const cancellationRate = nonDeletedAppointments > 0 
-        ? (cancelledAppointments / nonDeletedAppointments) * 100 
-        : 0;
-      const noShowRate = nonDeletedAppointments > 0 
-        ? (noShowAppointments / nonDeletedAppointments) * 100 
-        : 0;
+      const completionRate =
+        nonDeletedAppointments > 0
+          ? (completedAppointments / nonDeletedAppointments) * 100
+          : 0;
+      const cancellationRate =
+        nonDeletedAppointments > 0
+          ? (cancelledAppointments / nonDeletedAppointments) * 100
+          : 0;
+      const noShowRate =
+        nonDeletedAppointments > 0
+          ? (noShowAppointments / nonDeletedAppointments) * 100
+          : 0;
 
       return c.json({
         success: true,
@@ -313,6 +317,83 @@ const app = new Hono()
             error: {
               code: "INTERNAL_ERROR",
               message: "Failed to export appointments",
+            },
+          },
+          500,
+        );
+      }
+    },
+  )
+  // ============================================
+  // POST /api/admin/send-reminder - Send reminder for a specific appointment (Admin only)
+  // ============================================
+  .post(
+    "/send-reminder",
+    zValidator(
+      "json",
+      z.object({
+        appointmentId: z.string(),
+      }),
+    ),
+    async (c) => {
+      try {
+        const isAdminUser = await checkIsAdmin(c);
+        if (!isAdminUser) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "UNAUTHORIZED",
+                message: "Authentication required",
+              },
+            },
+            401,
+          );
+        }
+
+        const { appointmentId } = c.req.valid("json");
+
+        // Get the appointment with user details
+        const appointment = await prisma.appointment.findUnique({
+          where: { id: appointmentId },
+          include: {
+            user: {
+              select: {
+                email: true,
+                name: true,
+              },
+            },
+          },
+        });
+
+        if (!appointment) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "NOT_FOUND",
+                message: "Appointment not found",
+              },
+            },
+            404,
+          );
+        }
+
+        // Send reminder email (function handles DB update internally)
+        await sendAppointmentReminder(appointmentId);
+
+        return c.json({
+          success: true,
+          message: "Reminder sent successfully",
+        });
+      } catch (error) {
+        console.error("Admin send reminder error:", error);
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: "Failed to send reminder",
             },
           },
           500,

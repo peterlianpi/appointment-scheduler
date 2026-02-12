@@ -13,6 +13,7 @@ export default async function AdminLayout({
 
   if (!session?.user) {
     // Not authenticated, redirect to login
+    console.warn("[AdminLayout] Unauthorized access attempt - no session");
     redirect("/login");
   }
 
@@ -24,6 +25,9 @@ export default async function AdminLayout({
 
   if (user?.role !== "ADMIN") {
     // Not an admin, redirect to dashboard
+    console.warn(
+      `[AdminLayout] Non-admin user "${session.user.email}" attempted to access admin area`,
+    );
     redirect("/dashboard");
   }
 
