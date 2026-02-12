@@ -5,7 +5,6 @@ import {
   Calendar,
   LayoutDashboard,
   Settings2,
-  Users,
   BarChart3,
 } from "lucide-react";
 import { NavMain } from "@/features/nav/components/nav-main";
