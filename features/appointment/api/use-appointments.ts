@@ -1,97 +1,23 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { client } from "@/lib/api/hono-client";
-
-// ============================================
-// Types
-// ============================================
-
-export type AppointmentStatus =
-  | "SCHEDULED"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NO_SHOW";
-
-export interface Appointment {
-  id: string;
-  title: string;
-  description: string | null;
-  startDateTime: string;
-  endDateTime: string;
-  duration: number;
-  status: AppointmentStatus;
-  location: string | null;
-  meetingUrl: string | null;
-  emailNotificationSent: boolean;
-  reminderSent: boolean;
-  reminderSentAt: string | null;
-  cancelledAt: string | null;
-  cancelReason: string | null;
-  createdAt: string;
-  updatedAt: string;
-  userId: string;
-  // User info for admin searches
-  user?: {
-    id: string;
-    name: string | null;
-    email: string | null;
-  } | null;
-}
-
-export interface AppointmentListParams {
-  page?: number;
-  limit?: number;
-  status?: AppointmentStatus | "all" | undefined;
-  statuses?: string; // Comma-separated statuses for multi-select
-  search?: string;
-  searchFields?: string; // Fields to search in: "title,description", "title,description,location", "all", "email"
-  startDate?: string;
-  endDate?: string;
-  dateRangeType?: "upcoming" | "past" | "all";
-  userId?: string;
-}
-
-export interface AppointmentListResponse {
-  success: boolean;
-  data: Appointment[];
-  meta?: {
-    total: number;
-    page: number;
-    limit: number;
-    totalPages: number;
-  };
-}
-
-export interface AppointmentResponse {
-  success: boolean;
-  data: Appointment;
-}
-
-export interface CreateAppointmentInput {
-  title: string;
-  description?: string;
-  startDateTime: string;
-  endDateTime: string;
-  duration?: number;
-  location?: string;
-  meetingUrl?: string;
-  emailNotification?: boolean;
-}
-
-export interface UpdateAppointmentInput extends Partial<CreateAppointmentInput> {
-  id: string;
-}
-
-export interface UpdateStatusInput {
-  status: "COMPLETED" | "NO_SHOW" | "CANCELLED";
-  reason?: string;
-}
+import type {
+  Appointment,
+  AppointmentStatus,
+  AppointmentListParams,
+  AppointmentListResponse,
+  AppointmentResponse,
+  CreateAppointmentInput,
+  UpdateAppointmentInput,
+  UpdateStatusInput,
+  AppointmentStats,
+} from "@/features/appointment/types";
 
 // ============================================
 // Query Keys
 // ============================================
 
-export const appointmentKeys = {
+const appointmentKeys = {
   all: ["appointments"] as const,
   lists: () => [...appointmentKeys.all, "list"] as const,
   list: (params: AppointmentListParams) =>
@@ -99,6 +25,9 @@ export const appointmentKeys = {
   details: () => [...appointmentKeys.all, "detail"] as const,
   detail: (id: string) => [...appointmentKeys.details(), id] as const,
 };
+
+// Re-export query keys for convenience
+export { appointmentKeys };
 
 // ============================================
 // Queries
@@ -294,13 +223,6 @@ export function useDeleteAppointment() {
 // Stats
 // ============================================
 
-export interface AppointmentStats {
-  total: number;
-  upcoming: number;
-  completed: number;
-  cancelled: number;
-}
-
 export function useAppointmentStats() {
   return useQuery({
     queryKey: [...appointmentKeys.all, "stats"],
@@ -338,3 +260,16 @@ export function useAppointmentStats() {
     },
   });
 }
+
+// Re-export types for backward compatibility
+export type {
+  Appointment,
+  AppointmentStatus,
+  AppointmentListParams,
+  AppointmentListResponse,
+  AppointmentResponse,
+  CreateAppointmentInput,
+  UpdateAppointmentInput,
+  UpdateStatusInput,
+  AppointmentStats,
+} from "@/features/appointment/types";

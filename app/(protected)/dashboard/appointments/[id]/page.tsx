@@ -1,10 +1,10 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Edit } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppointmentFormWrapper } from "@/features/appointment/components/appointment-form-wrapper";
+import { AppointmentDetail } from "@/features/appointment/components/appointment-detail";
 import { useAppointment } from "@/features/appointment/api/use-appointments";
 
 export default function AppointmentPage() {
@@ -12,18 +12,15 @@ export default function AppointmentPage() {
   const router = useRouter();
   const id = params?.id as string | undefined;
 
-  // "new" means creating a new appointment
-  const isNew = id === "new";
-  // Otherwise, we have an actual id to edit
-  const appointmentId = !isNew && id ? id : null;
-
-  // Fetch appointment data if editing
-  const { data, isLoading, error } = useAppointment(appointmentId);
+  // Fetch appointment data
+  const { data, isLoading, error } = useAppointment(id!);
   const appointment = data?.data;
 
-  const handleSuccess = () => {
-    router.push("/dashboard/appointments");
-  };
+  // Redirect to /new if no id is provided
+  if (!id) {
+    router.push("/dashboard/appointments/new");
+    return null;
+  }
 
   const handleClose = () => {
     router.push("/dashboard/appointments");
@@ -52,10 +49,10 @@ export default function AppointmentPage() {
   }
 
   // Show error if appointment not found
-  if (error || (!isNew && !appointment)) {
+  if (error || !appointment) {
     return (
       <div className="flex flex-col items-center justify-center gap-4 p-8">
-        <p className="text-muted-foreground">Failed to load appointment</p>
+        <p className="text-muted-foreground">Appointment not found</p>
         <Button variant="outline" onClick={handleClose}>
           <ArrowLeft className="mr-2 h-4 w-4" />
           Go back
@@ -66,32 +63,31 @@ export default function AppointmentPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Page Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={handleClose}>
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {isNew ? "Create Appointment" : "Edit Appointment"}
-          </h1>
-          <p className="text-muted-foreground">
-            {isNew
-              ? "Fill in the details to create a new appointment"
-              : "Update the appointment details below"}
-          </p>
+      {/* Page Header
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={handleClose}>
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              Appointment Details
+            </h1>
+            <p className="text-muted-foreground">
+              View and manage the appointment
+            </p>
+          </div>
         </div>
-      </div>
+        <Button
+          onClick={() => router.push(`/dashboard/appointments/${id}/edit`)}
+        >
+          <Edit className="mr-2 h-4 w-4" />
+          Edit
+        </Button>
+      </div> */}
 
-      {/* Form - using Dialog component for consistent styling */}
-      <AppointmentFormWrapper
-        open={true}
-        onOpenChange={(open) => {
-          if (!open) handleClose();
-        }}
-        appointment={appointment ?? null}
-        onSuccess={handleSuccess}
-      />
+      {/* Appointment Detail */}
+      <AppointmentDetail appointmentId={id} onClose={handleClose} />
     </div>
   );
 }

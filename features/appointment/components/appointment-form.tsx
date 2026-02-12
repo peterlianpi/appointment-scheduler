@@ -124,6 +124,14 @@ export function AppointmentForm({
     }
   }, [appointment, open, reset]);
 
+  // Helper function to format datetime to ISO 8601 format
+  const formatDateTime = (value: string): string => {
+    if (!value) return "";
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return "";
+    return date.toISOString();
+  };
+
   const onSubmit = async (values: unknown) => {
     const formValues = values as {
       title: string;
@@ -135,14 +143,18 @@ export function AppointmentForm({
       emailNotification?: boolean;
     };
 
+    // Format datetime values to ISO 8601 before sending to API
+    const formattedStartDateTime = formatDateTime(formValues.startDateTime);
+    const formattedEndDateTime = formatDateTime(formValues.endDateTime);
+
     try {
       if (isEditing) {
         await updateMutation.mutateAsync({
           id: appointment!.id,
           title: formValues.title,
           description: formValues.description,
-          startDateTime: formValues.startDateTime,
-          endDateTime: formValues.endDateTime,
+          startDateTime: formattedStartDateTime,
+          endDateTime: formattedEndDateTime,
           location: formValues.location,
           meetingUrl: formValues.meetingUrl,
           emailNotification: formValues.emailNotification ?? false,
@@ -151,8 +163,8 @@ export function AppointmentForm({
         await createMutation.mutateAsync({
           title: formValues.title,
           description: formValues.description,
-          startDateTime: formValues.startDateTime,
-          endDateTime: formValues.endDateTime,
+          startDateTime: formattedStartDateTime,
+          endDateTime: formattedEndDateTime,
           location: formValues.location,
           meetingUrl: formValues.meetingUrl,
           emailNotification: formValues.emailNotification ?? false,

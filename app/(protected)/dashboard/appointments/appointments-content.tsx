@@ -10,7 +10,6 @@ import { AppointmentList } from "@/features/appointment/components/appointment-l
 import {
   Appointment,
   AppointmentStatus,
-  useAppointments,
 } from "@/features/appointment/api/use-appointments";
 import { AppointmentDetail } from "@/features/appointment/components/appointment-detail";
 
@@ -42,13 +41,6 @@ export function AppointmentsContent() {
     initialStatus || "all",
   );
   const [search, setSearch] = useState(initialSearch);
-
-  useAppointments({
-    page,
-    limit: 10,
-    status: status === "all" ? undefined : status,
-    search: search || undefined,
-  });
 
   const handleCreate = () => {
     router.push("/dashboard/appointments/new");
