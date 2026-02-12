@@ -24,6 +24,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -57,6 +67,7 @@ export function AppointmentDetail({
   const updateStatus = useUpdateAppointmentStatus();
   const deleteMutation = useDeleteAppointment();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   const appointment = data?.data;
 
@@ -226,7 +237,7 @@ export function AppointmentDetail({
               </Button>
               <Button
                 variant="destructive"
-                onClick={() => handleStatusChange("CANCELLED")}
+                onClick={() => setShowCancelDialog(true)}
                 disabled={updateStatus.isPending}
               >
                 Cancel Appointment
@@ -285,6 +296,27 @@ export function AppointmentDetail({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Appointment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this appointment? This action will
+              change the status to CANCELLED and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Keep Appointment</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => handleStatusChange("CANCELLED")}
+              disabled={updateStatus.isPending}
+            >
+              {updateStatus.isPending ? "Cancelling..." : "Cancel Appointment"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

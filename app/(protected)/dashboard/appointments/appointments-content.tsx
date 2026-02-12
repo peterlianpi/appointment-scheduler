@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,7 @@ import {
   Appointment,
   AppointmentStatus,
 } from "@/features/appointment/api/use-appointments";
-import { AppointmentDetail } from "@/features/appointment/components/appointment-detail";
+import { useState } from "react";
 
 const statusTabs = [
   { value: "all", label: "All" },
@@ -23,10 +22,6 @@ const statusTabs = [
 export function AppointmentsContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [selectedAppointmentId, setSelectedAppointmentId] = useState<
-    string | null
-  >(null);
-  const [viewMode, setViewMode] = useState<"list" | "detail">("list");
 
   // Initialize state from URL params
   const initialStatus = searchParams.get("status") as
@@ -47,17 +42,11 @@ export function AppointmentsContent() {
   };
 
   const handleEdit = (appointment: Appointment) => {
-    router.push(`/dashboard/appointments/${appointment.id}`);
+    router.push(`/dashboard/appointments/${appointment.id}/edit`);
   };
 
   const handleView = (appointment: Appointment) => {
-    setSelectedAppointmentId(appointment.id);
-    setViewMode("detail");
-  };
-
-  const handleDetailClose = () => {
-    setSelectedAppointmentId(null);
-    setViewMode("list");
+    router.push(`/dashboard/appointments/${appointment.id}`);
   };
 
   const handleSearch = (value: string) => {
@@ -118,28 +107,17 @@ export function AppointmentsContent() {
 
       {/* Main Content */}
       <div className="flex-1">
-        {viewMode === "list" ? (
-          <AppointmentList
-            onEdit={handleEdit}
-            onView={handleView}
-            showFilters={false}
-            status={status}
-            page={page}
-            search={search}
-            onStatusChange={handleStatusChange}
-            onPageChange={setPage}
-            onSearchChange={handleSearch}
-          />
-        ) : (
-          <AppointmentDetail
-            appointmentId={selectedAppointmentId}
-            onClose={handleDetailClose}
-            onEdit={(apt) => {
-              setViewMode("list");
-              handleEdit(apt);
-            }}
-          />
-        )}
+        <AppointmentList
+          onEdit={handleEdit}
+          onView={handleView}
+          showFilters={false}
+          status={status}
+          page={page}
+          search={search}
+          onStatusChange={handleStatusChange}
+          onPageChange={setPage}
+          onSearchChange={handleSearch}
+        />
       </div>
     </div>
   );

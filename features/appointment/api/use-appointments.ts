@@ -113,6 +113,8 @@ export function useCreateAppointment() {
       return data as AppointmentResponse;
     },
     onSuccess: () => {
+      // Invalidate all appointment-related queries to ensure list refresh
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
       toast.success("Appointment created successfully");
     },
@@ -145,6 +147,8 @@ export function useUpdateAppointment() {
       return data as AppointmentResponse;
     },
     onSuccess: () => {
+      // Invalidate all appointment-related queries to ensure list refresh
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
       toast.success("Appointment updated successfully");
     },
@@ -179,8 +183,11 @@ export function useUpdateAppointmentStatus() {
       const data = await res.json();
       return data as AppointmentResponse;
     },
-    onSuccess: () => {
+    onSuccess: (_, { id }) => {
+      // Invalidate all appointment-related queries to ensure list refresh
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.detail(id) });
       toast.success("Status updated successfully");
     },
     onError: (error: Error) => {
@@ -210,6 +217,8 @@ export function useDeleteAppointment() {
       return data as { success: boolean };
     },
     onSuccess: () => {
+      // Invalidate all appointment-related queries to ensure list refresh
+      queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
       toast.success("Appointment deleted successfully");
     },

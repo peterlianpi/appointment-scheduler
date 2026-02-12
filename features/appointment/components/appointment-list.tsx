@@ -97,6 +97,7 @@ export function AppointmentList({
   onView,
   showFilters = true,
   userId,
+  status,
   statuses: controlledStatuses,
   page: controlledPage,
   search: controlledSearch,
@@ -119,11 +120,15 @@ export function AppointmentList({
 
   // Determine which status mode to use
   const hasControlledStatuses = controlledStatuses !== undefined;
+  const hasControlledStatus = status !== undefined;
 
-  // Use controlled statuses based on what's provided
+  // Use controlled status/s based on what's provided
+  // Priority: controlledStatuses > controlledStatus > internalStatuses
   const statuses = hasControlledStatuses
     ? controlledStatuses
-    : internalStatuses;
+    : hasControlledStatus
+      ? (status === "all" ? [] : [status])
+      : internalStatuses;
   const page = controlledPage !== undefined ? controlledPage : internalPage;
   const dateRangeType =
     controlledDateRangeType !== undefined

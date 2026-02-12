@@ -86,6 +86,16 @@ export function AppointmentFormStandalone({
   };
 
   const onSubmit = async (values: AppointmentFormValues) => {
+    // Validate required fields
+    if (!values.startDateTime) {
+      toast.error("Start date and time is required");
+      return;
+    }
+    if (!values.endDateTime) {
+      toast.error("End date and time is required");
+      return;
+    }
+
     try {
       // Format datetime values to ISO 8601 before sending to API
       const formattedStartDateTime = formatDateTime(values.startDateTime);

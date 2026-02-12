@@ -259,11 +259,26 @@ export async function sendBulkReminders(options?: {
       `[AppointmentMail] TEST MODE: Looking for appointments between ${startWindow.toISOString()} and ${endWindow.toISOString()}`,
     );
   } else {
-    // Normal mode: query appointments in the next 7 days (max reminder window)
-    // We'll filter by each user's reminderHoursBefore preference later
-    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
-    startWindow = now;
-    endWindow = sevenDaysFromNow;
+    // Normal mode: query appointments that will need reminders by the next cron run
+    // For daily cron with 24h reminder window: check appointments 23-47 hours away
+    // This catches appointments that will be within 24 hours at the next cron run
+    // Example: Appointment at 8 PM tomorrow (~44h away at midnight cron)
+    // - Would be missed with 0-24h window
+    // - With 23-47h window: caught at first midnight, sent ~20h before (acceptable)
+    // The 1-hour overlap (23 instead of 24) ensures we don't miss appointments at the edge
+    const defaultReminderHours = 24;
+    const minHoursAway = defaultReminderHours - 1; // 23 hours
+    const maxHoursAway = defaultReminderHours * 2 - 1; // 47 hours (1 hour overlap for edge cases)
+
+    const minHoursAwayMs = minHoursAway * 60 * 60 * 1000;
+    const maxHoursAwayMs = maxHoursAway * 60 * 60 * 1000;
+
+    startWindow = new Date(now.getTime() + minHoursAwayMs);
+    endWindow = new Date(now.getTime() + maxHoursAwayMs);
+
+    console.log(
+      `[AppointmentMail] NORMAL MODE: Looking for appointments between ${startWindow.toISOString()} and ${endWindow.toISOString()} (${minHoursAway}h-${maxHoursAway}h window)`,
+    );
   }
 
   try {
@@ -314,8 +329,8 @@ export async function sendBulkReminders(options?: {
         const timeUntilAppointment =
           appointment.startDateTime.getTime() - now.getTime();
 
-        if (timeUntilAppointment > reminderWindowMs) {
-          // Appointment is too far in the future, skip for now
+        if (timeUntilAppointment >= reminderWindowMs) {
+          // Appointment is still too far in the future (at or beyond the reminder window), skip for now
           console.log(
             `[AppointmentMail] Appointment ${appointment.id} is ${Math.round(timeUntilAppointment / (60 * 60 * 1000))}h away, user wants reminder at ${preferences.reminderHoursBefore}h, skipping`,
           );
