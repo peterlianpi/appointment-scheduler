@@ -270,7 +270,7 @@ export { PasswordStrengthIndicator } from "./components/password-strength-indica
  *
  * @see {@link https://github.com/your-org/appointment-scheduler/blob/main/features/auth/hooks/use-login.ts | Source}
  */
-export { useLogin } from "./hooks/use-login";
+export { useLogin } from "./hooks/use-auth-mutation";
 
 /**
  * Authentication hook for user registration.
@@ -295,7 +295,7 @@ export { useLogin } from "./hooks/use-login";
  *
  * @see {@link https://github.com/your-org/appointment-scheduler/blob/main/features/auth/hooks/use-register.ts | Source}
  */
-export { useRegister } from "./hooks/use-register";
+export { useRegister } from "./hooks/use-auth-mutation";
 
 /**
  * Hook for initiating password reset.

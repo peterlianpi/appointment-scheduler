@@ -18,12 +18,12 @@ export default function AppointmentPage() {
 
   // Redirect to /new if no id is provided
   if (!id) {
-    router.push("/dashboard/appointments/new");
+    router.push("/appointments/new");
     return null;
   }
 
   const handleClose = () => {
-    router.push("/dashboard/appointments");
+    router.push("/appointments");
   };
 
   // Show loading skeleton while fetching
@@ -63,29 +63,6 @@ export default function AppointmentPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Page Header
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={handleClose}>
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight">
-              Appointment Details
-            </h1>
-            <p className="text-muted-foreground">
-              View and manage the appointment
-            </p>
-          </div>
-        </div>
-        <Button
-          onClick={() => router.push(`/dashboard/appointments/${id}/edit`)}
-        >
-          <Edit className="mr-2 h-4 w-4" />
-          Edit
-        </Button>
-      </div> */}
-
       {/* Appointment Detail */}
       <AppointmentDetail appointmentId={id} onClose={handleClose} />
     </div>

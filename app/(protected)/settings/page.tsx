@@ -184,7 +184,7 @@ export default function SettingsPage() {
                 </p>
               </div>
               <Button variant="outline" asChild>
-                <Link href="/dashboard/settings/change-password">
+                <Link href="/settings/change-password">
                   <Lock className="mr-2 h-4 w-4" />
                   Change Password
                 </Link>

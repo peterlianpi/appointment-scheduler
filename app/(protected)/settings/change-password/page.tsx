@@ -120,7 +120,7 @@ export default function ChangePasswordPage() {
             </CardHeader>
             <CardContent className="flex justify-center">
               <Button asChild>
-                <Link href="/dashboard/settings">
+                <Link href="/settings">
                   <ArrowLeft className="mr-2 h-4 w-4" />
                   Back to Settings
                 </Link>
@@ -137,7 +137,7 @@ export default function ChangePasswordPage() {
       <div className="space-y-6">
         <div className="flex items-center gap-4">
           <Button variant="ghost" size="icon" asChild>
-            <Link href="/dashboard/settings">
+            <Link href="/settings">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -201,7 +201,7 @@ export default function ChangePasswordPage() {
                       {isLoading ? "Changing..." : "Change Password"}
                     </Button>
                     <Button variant="outline" type="button" asChild>
-                      <Link href="/dashboard/settings">Cancel</Link>
+                      <Link href="/settings">Cancel</Link>
                     </Button>
                   </div>
                 </FieldGroup>

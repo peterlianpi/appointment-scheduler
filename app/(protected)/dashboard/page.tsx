@@ -93,7 +93,7 @@ export default function DashboardPage() {
           </div>
           <Button variant="ghost" asChild>
             <Link
-              href="/dashboard/appointments?status=scheduled"
+              href="/appointments?status=scheduled"
               className="flex items-center gap-2"
             >
               View All
@@ -136,7 +136,7 @@ export default function DashboardPage() {
                   Schedule a new appointment to get started
                 </p>
                 <Button variant="outline" className="mt-4" asChild>
-                  <Link href="/dashboard/appointments/new">
+                  <Link href="/appointments/new">
                     Schedule Appointment
                   </Link>
                 </Button>
@@ -173,14 +173,14 @@ export default function DashboardPage() {
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <ActionCard
-          href="/dashboard/appointments"
+          href="/appointments"
           icon={Calendar}
           title="View All Appointments"
           description="See and manage all your appointments in one place"
           buttonText="View Appointments"
         />
         <ActionCard
-          href="/dashboard/appointments?status=scheduled"
+          href="/appointments?status=scheduled"
           icon={Clock}
           title="Upcoming Appointments"
           description="Check your scheduled appointments"
@@ -188,7 +188,7 @@ export default function DashboardPage() {
           iconColor="text-blue-500"
         />
         <ActionCard
-          href="/dashboard/settings"
+          href="/settings"
           icon={Calendar}
           title="Settings"
           description="Configure your account and preferences"

@@ -69,7 +69,7 @@ export async function signOutSession(sessionId: string) {
     },
   });
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/settings");
   return { success: true };
 }
 
@@ -98,7 +98,7 @@ export async function signOutOtherDevices() {
     },
   });
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/settings");
   return { success: true };
 }
 
@@ -121,6 +121,6 @@ export async function signOutAllDevices() {
     },
   });
 
-  revalidatePath("/dashboard/settings");
+  revalidatePath("/settings");
   return { success: true };
 }

@@ -8,7 +8,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -24,6 +23,8 @@ import {
 } from "@/components/ui/field";
 import { toast } from "sonner";
 import { sendWelcomeEmail, resendVerificationEmail } from "../lib/auth-api";
+import { PasswordInput } from "@/features/auth/components/password-input";
+import { PasswordStrengthIndicator } from "@/features/auth/components/password-strength-indicator";
 import { cn } from "@/lib/utils";
 import type { RegisterFormProps } from "../types/auth";
 
@@ -44,208 +45,6 @@ const registerFormSchema = z
   });
 
 type RegisterFormValues = z.infer<typeof registerFormSchema>;
-
-// ============================================
-// Password Strength Indicator Component
-// ============================================
-
-function PasswordStrengthIndicator({
-  password,
-  name,
-  email,
-}: {
-  password: string;
-  name?: string;
-  email?: string;
-}) {
-  const commonPasswords = [
-    "password",
-    "123456",
-    "123456789",
-    "qwerty",
-    "abc123",
-    "password123",
-    "admin",
-    "letmein",
-    "welcome",
-    "monkey",
-    "dragon",
-  ];
-
-  const isSameAsOld = false;
-  const containsName =
-    name && password.toLowerCase().includes(name.toLowerCase());
-  const containsEmail =
-    email && password.toLowerCase().includes(email.split("@")[0].toLowerCase());
-
-  const checks = {
-    length: password.length >= 12,
-    uppercase: /[A-Z]/.test(password),
-    lowercase: /[a-z]/.test(password),
-    number: /[0-9]/.test(password),
-    symbol: /[^A-Za-z0-9]/.test(password),
-    notSameAsOld: !isSameAsOld,
-    notRelatedToPersonal: !containsName && !containsEmail,
-  };
-
-  const isCommon =
-    commonPasswords.includes(password.toLowerCase()) && password.length > 0;
-
-  const score = Object.values(checks).filter(Boolean).length;
-  const strength =
-    isCommon || score < 4 ? "weak" : score < 6 ? "medium" : "strong";
-
-  const strengthColors = {
-    weak: "bg-red-500",
-    medium: "bg-yellow-500",
-    strong: "bg-green-500",
-  };
-
-  const strengthTexts = {
-    weak: "Weak",
-    medium: "Medium",
-    strong: "Strong",
-  };
-
-  const showChecklist = password.length > 0 && strength !== "strong";
-
-  if (password.length === 0) {
-    return null;
-  }
-
-  return (
-    <div
-      className="space-y-2"
-      role="region"
-      aria-label="Password strength indicator"
-    >
-      <div className="flex items-center gap-2">
-        <div className="flex-1 h-2 bg-gray-200 rounded-full overflow-hidden">
-          <div
-            className={cn(
-              "h-full transition-all duration-300",
-              strengthColors[strength],
-            )}
-            style={{ width: `${(score / 6) * 100}%` }}
-            aria-valuenow={score}
-            aria-valuemin={0}
-            aria-valuemax={6}
-            aria-label={`Password strength: ${strengthTexts[strength]}`}
-          />
-        </div>
-        <span className="text-sm font-medium" aria-live="polite">
-          {strengthTexts[strength]}
-        </span>
-      </div>
-
-      {showChecklist && (
-        <ul
-          className="text-sm space-y-1"
-          aria-label="Password requirements checklist"
-        >
-          <li className="flex items-center gap-2">
-            {password.length >= 12 ? (
-              <span className="text-green-500">✓</span>
-            ) : (
-              <span className="text-red-500">✗</span>
-            )}
-            At least 12 characters
-          </li>
-          <li className="flex items-center gap-2">
-            {checks.uppercase ? (
-              <span className="text-green-500">✓</span>
-            ) : (
-              <span className="text-red-500">✗</span>
-            )}
-            One uppercase letter
-          </li>
-          <li className="flex items-center gap-2">
-            {checks.lowercase ? (
-              <span className="text-green-500">✓</span>
-            ) : (
-              <span className="text-red-500">✗</span>
-            )}
-            One lowercase letter
-          </li>
-          <li className="flex items-center gap-2">
-            {checks.number ? (
-              <span className="text-green-500">✓</span>
-            ) : (
-              <span className="text-red-500">✗</span>
-            )}
-            One number
-          </li>
-          <li className="flex items-center gap-2">
-            {checks.symbol ? (
-              <span className="text-green-500">✓</span>
-            ) : (
-              <span className="text-red-500">✗</span>
-            )}
-            One special character
-          </li>
-          {isCommon && (
-            <li className="flex items-center gap-2 text-red-500">
-              <span className="text-red-500">✗</span>
-              Password is commonly used
-            </li>
-          )}
-        </ul>
-      )}
-    </div>
-  );
-}
-
-// ============================================
-// Password Input Component (Inline)
-// ============================================
-
-function PasswordInput({
-  name,
-  label,
-  placeholder,
-  disabled,
-  form,
-}: {
-  name: "password" | "confirmPassword";
-  label?: string;
-  placeholder?: string;
-  disabled?: boolean;
-  form: ReturnType<typeof useForm<RegisterFormValues>>;
-}) {
-  const [showPassword, setShowPassword] = useState(false);
-
-  return (
-    <Field>
-      <FieldLabel htmlFor={name}>{label}</FieldLabel>
-      <div className="relative">
-        <Input
-          id={name}
-          type={showPassword ? "text" : "password"}
-          placeholder={placeholder}
-          disabled={disabled}
-          {...form.register(name)}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          aria-label={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? (
-            <EyeOff className="h-4 w-4" />
-          ) : (
-            <Eye className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-      {form.formState.errors[name] && (
-        <p className="text-sm text-red-500">
-          {form.formState.errors[name]?.message}
-        </p>
-      )}
-    </Field>
-  );
-}
 
 // ============================================
 // Register Form Component
@@ -398,7 +197,7 @@ export function RegisterForm({
               </Field>
 
               <Field>
-                  <PasswordInput
+                <PasswordInput
                   name="confirmPassword"
                   label="Confirm Password"
                   placeholder="Confirm your password"

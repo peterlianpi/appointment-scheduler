@@ -1,7 +1,6 @@
 "use client";
 
-import { useState } from "react";
-import { AppointmentForm } from "./appointment-form";
+import { AppointmentFormDialog } from "./appointment-form";
 import { Appointment } from "@/features/appointment/api/use-appointments";
 
 interface AppointmentFormWrapperProps {
@@ -11,28 +10,18 @@ interface AppointmentFormWrapperProps {
   onSuccess?: () => void;
 }
 
-// Simple mounted check that works for SSR scenarios
-function useIsMounted() {
-  const [isMounted] = useState(
-    () => typeof window !== "undefined"
-  );
-  return isMounted;
-}
-
 export function AppointmentFormWrapper({
   open,
   onOpenChange,
   appointment,
   onSuccess,
 }: AppointmentFormWrapperProps) {
-  const isMounted = useIsMounted();
-
   return (
-    <AppointmentForm
+    <AppointmentFormDialog
       open={open}
       onOpenChange={onOpenChange}
       appointment={appointment}
-      onSuccess={isMounted ? onSuccess : undefined}
+      onSuccess={onSuccess}
     />
   );
 }

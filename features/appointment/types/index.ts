@@ -4,9 +4,18 @@
 
 export type AppointmentStatus =
   | "SCHEDULED"
+  | "IN_PROGRESS"
   | "COMPLETED"
   | "CANCELLED"
   | "NO_SHOW";
+
+// Statuses that can be used to update an appointment status (matches API)
+export type UpdateAppointmentStatus = "COMPLETED" | "CANCELLED" | "NO_SHOW";
+
+export interface UpdateStatusInput {
+  status: UpdateAppointmentStatus;
+  reason?: string;
+}
 
 export interface Appointment {
   id: string;
@@ -87,7 +96,7 @@ export interface UpdateAppointmentInput extends Partial<CreateAppointmentInput> 
 }
 
 export interface UpdateStatusInput {
-  status: "COMPLETED" | "NO_SHOW" | "CANCELLED";
+  status: UpdateAppointmentStatus;
   reason?: string;
 }
 
@@ -121,13 +130,6 @@ export interface AppointmentFormProps {
   onOpenChange: (open: boolean) => void;
   appointment?: Appointment | null;
   onSuccess?: () => void;
-}
-
-export interface AppointmentFormUIProps {
-  isPending?: boolean;
-  isEditing?: boolean;
-  onCancel?: () => void;
-  submitLabel?: string;
 }
 
 export interface AppointmentFormStandaloneProps {
@@ -165,9 +167,10 @@ export interface AppointmentListProps {
 
 export interface AppointmentCardProps {
   appointment: Appointment;
+  isLoading?: boolean;
   onEdit?: (appointment: Appointment) => void;
   onView?: (appointment: Appointment) => void;
-  onStatusChange?: (id: string, status: AppointmentStatus) => void;
+  onStatusChange?: (id: string, status: UpdateAppointmentStatus) => void;
   onDelete?: (id: string) => void;
 }
 

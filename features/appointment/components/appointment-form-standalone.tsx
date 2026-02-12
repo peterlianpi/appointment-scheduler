@@ -3,24 +3,53 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
-import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
 import {
   Appointment,
   useCreateAppointment,
   useUpdateAppointment,
 } from "@/features/appointment/api/use-appointments";
+import { AppointmentFormValues } from "@/features/appointment/types";
 import {
-  AppointmentFormUI,
-  AppointmentFormValues,
-} from "./appointment-form-ui";
+  AppointmentFormFields,
+  AppointmentFormActions,
+} from "./appointment-form-fields";
+
+// ============================================
+// Default Form Values
+// ============================================
+
+const defaultValues: AppointmentFormValues = {
+  title: "",
+  description: "",
+  startDateTime: "",
+  endDateTime: "",
+  location: "",
+  meetingUrl: "",
+  emailNotification: false,
+};
+
+// ============================================
+// Component Props
+// ============================================
 
 interface AppointmentFormStandaloneProps {
   appointment?: Appointment | null;
   onSuccess?: () => void;
   onCancel?: () => void;
+}
+
+// ============================================
+// Helper Functions
+// ============================================
+
+function formatDateTime(value: string): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (isNaN(date.getTime())) return "";
+  return date.toISOString();
 }
 
 // ============================================
@@ -39,20 +68,12 @@ export function AppointmentFormStandalone({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const methods = useForm<AppointmentFormValues>({
-    defaultValues: {
-      title: "",
-      description: "",
-      startDateTime: "",
-      endDateTime: "",
-      location: "",
-      meetingUrl: "",
-      emailNotification: false,
-    },
+    defaultValues,
   });
 
   const { reset, handleSubmit } = methods;
 
-  // Reset form when appointment changes
+  // Reset form when appointment data changes
   useEffect(() => {
     if (appointment) {
       reset({
@@ -65,25 +86,9 @@ export function AppointmentFormStandalone({
         emailNotification: appointment.emailNotificationSent,
       });
     } else {
-      reset({
-        title: "",
-        description: "",
-        startDateTime: "",
-        endDateTime: "",
-        location: "",
-        meetingUrl: "",
-        emailNotification: false,
-      });
+      reset(defaultValues);
     }
   }, [appointment, reset]);
-
-  // Helper function to format datetime to ISO 8601 format
-  const formatDateTime = (value: string): string => {
-    if (!value) return "";
-    const date = new Date(value);
-    if (isNaN(date.getTime())) return "";
-    return date.toISOString();
-  };
 
   const onSubmit = async (values: AppointmentFormValues) => {
     // Validate required fields
@@ -97,7 +102,6 @@ export function AppointmentFormStandalone({
     }
 
     try {
-      // Format datetime values to ISO 8601 before sending to API
       const formattedStartDateTime = formatDateTime(values.startDateTime);
       const formattedEndDateTime = formatDateTime(values.endDateTime);
 
@@ -125,28 +129,73 @@ export function AppointmentFormStandalone({
         });
         toast.success("Appointment created successfully");
       }
-      router.push("/dashboard/appointments");
+      router.push("/appointments");
+      onSuccess?.();
     } catch {
       toast.error("Failed to create/update appointment");
     }
   };
 
+  const handleCancel = () => {
+    if (onCancel) {
+      onCancel();
+    } else {
+      router.push("/appointments");
+    }
+  };
+
   return (
     <FormProvider {...methods}>
-      <AppointmentFormUI
-        isPending={isPending}
-        isEditing={isEditing}
-        onCancel={onCancel}
-        onSubmit={onSubmit}
-        submitLabel={isEditing ? "Update" : "Create"}
-      />
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <AppointmentFormFields isPending={isPending} />
+        <AppointmentFormActions
+          isPending={isPending}
+          isEditing={isEditing}
+          onCancel={handleCancel}
+        />
+      </form>
     </FormProvider>
+  );
+}
+
+// ============================================
+// Standalone Page Layout Component
+// ============================================
+
+interface AppointmentFormPageLayoutProps {
+  title: string;
+  description: string;
+  onBack?: () => void;
+  children: React.ReactNode;
+}
+
+export function AppointmentFormPageLayout({
+  title,
+  description,
+  onBack,
+  children,
+}: AppointmentFormPageLayoutProps) {
+  return (
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center gap-4">
+        <Button variant="ghost" size="icon" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+          <p className="text-muted-foreground">{description}</p>
+        </div>
+      </div>
+      {children}
+    </div>
   );
 }
 
 // ============================================
 // Loading Skeleton
 // ============================================
+
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function AppointmentFormStandaloneSkeleton() {
   return (

@@ -1,18 +1,19 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
   Calendar,
   Clock,
   MapPin,
   Video,
-  MoreHorizontal,
   Search,
   Filter,
   ChevronLeft,
   ChevronRight,
   X,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,16 +38,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 
 import {
   Appointment,
@@ -54,8 +61,15 @@ import {
   useUpdateAppointmentStatus,
   useDeleteAppointment,
   AppointmentStatus,
+  UpdateAppointmentStatus,
 } from "@/features/appointment/api/use-appointments";
 import { useDebouncedSearch } from "@/features/appointment/hooks/use-debounced-search";
+import { AppointmentActionsDropdown } from "./appointment-actions-dropdown";
+import {
+  statusColors,
+  statusProgressConfig,
+  allStatuses,
+} from "@/features/appointment/constants/status-config";
 
 interface AppointmentListProps {
   onEdit?: (appointment: Appointment) => void;
@@ -75,22 +89,6 @@ interface AppointmentListProps {
   onSearchChange?: (search: string) => void;
   onDateRangeTypeChange?: (type: "upcoming" | "past" | "all") => void;
 }
-
-const statusColors: Record<AppointmentStatus, string> = {
-  SCHEDULED: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300",
-  COMPLETED:
-    "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300",
-  CANCELLED: "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300",
-  NO_SHOW:
-    "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-300",
-};
-
-const allStatuses: AppointmentStatus[] = [
-  "SCHEDULED",
-  "COMPLETED",
-  "CANCELLED",
-  "NO_SHOW",
-];
 
 export function AppointmentList({
   onEdit,
@@ -118,6 +116,16 @@ export function AppointmentList({
   const [debouncedSearch, setSearchInput, clearSearch, searchInput] =
     useDebouncedSearch(300);
 
+  const router = useRouter();
+
+  // Track action states for individual appointments
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [appointmentToDelete, setAppointmentToDelete] = useState<string | null>(
+    null,
+  );
+
   // Determine which status mode to use
   const hasControlledStatuses = controlledStatuses !== undefined;
   const hasControlledStatus = status !== undefined;
@@ -127,7 +135,9 @@ export function AppointmentList({
   const statuses = hasControlledStatuses
     ? controlledStatuses
     : hasControlledStatus
-      ? (status === "all" ? [] : [status])
+      ? status === "all"
+        ? []
+        : [status]
       : internalStatuses;
   const page = controlledPage !== undefined ? controlledPage : internalPage;
   const dateRangeType =
@@ -193,15 +203,31 @@ export function AppointmentList({
 
   const handleStatusChange = (
     id: string,
-    newStatus: "COMPLETED" | "NO_SHOW" | "CANCELLED",
+    newStatus: UpdateAppointmentStatus,
   ) => {
+    setUpdatingStatusId(id);
     updateStatus({ id, input: { status: newStatus } });
   };
 
-  const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this appointment?")) {
-      deleteAppointment(id);
+  const handleDeleteClick = (id: string) => {
+    setAppointmentToDelete(id);
+    setShowDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = () => {
+    if (appointmentToDelete) {
+      setDeletingId(appointmentToDelete);
+      deleteAppointment(appointmentToDelete);
     }
+  };
+
+  const handleViewClick = (appointment: Appointment) => {
+    onView?.(appointment);
+    router.push(`/appointments/${appointment.id}`);
+  };
+
+  const handleEditClick = (appointment: Appointment) => {
+    onEdit?.(appointment);
   };
 
   const toggleStatus = (status: string) => {
@@ -222,6 +248,14 @@ export function AppointmentList({
   const totalPages = meta?.totalPages || 1;
   const hasActiveFilters =
     search || statuses.length > 0 || dateRangeType !== "all";
+
+  // Reset action states when appointments change
+  useState(() => {
+    if (!isUpdatingStatus && !isDeleting) {
+      setUpdatingStatusId(null);
+      setDeletingId(null);
+    }
+  });
 
   if (error) {
     return (
@@ -277,7 +311,7 @@ export function AppointmentList({
                   setDateRangeType(value);
                 }}
               >
-                <SelectTrigger className="w-[160px]">
+                <SelectTrigger className="w-40">
                   <SelectValue placeholder="Date range" />
                 </SelectTrigger>
                 <SelectContent>
@@ -292,7 +326,7 @@ export function AppointmentList({
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className="min-w-[140px] justify-between"
+                    className="min-w-35 justify-between"
                   >
                     <Filter className="h-4 w-4 mr-2" />
                     {statuses.length === 0
@@ -302,7 +336,7 @@ export function AppointmentList({
                         : `${statuses.length} selected`}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-[200px]" align="start">
+                <PopoverContent className="w-50" align="start">
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium">
@@ -393,8 +427,8 @@ export function AppointmentList({
             <div key={i} className="flex items-center space-x-4">
               <Skeleton className="h-12 w-12 rounded-full" />
               <div className="space-y-2 flex-1">
-                <Skeleton className="h-4 w-[250px]" />
-                <Skeleton className="h-4 w-[200px]" />
+                <Skeleton className="h-4 w-62.5" />
+                <Skeleton className="h-4 w-50" />
               </div>
             </div>
           ))}
@@ -413,144 +447,123 @@ export function AppointmentList({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {appointments.map((appointment: Appointment) => (
-                  <TableRow key={appointment.id}>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <p className="font-medium">{appointment.title}</p>
-                        {appointment.description && (
-                          <p className="text-sm text-muted-foreground line-clamp-1">
-                            {appointment.description}
-                          </p>
-                        )}
-                        {appointment.user && (
-                          <p className="text-xs text-muted-foreground">
-                            {appointment.user.email}
-                          </p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col items-start gap-1">
-                        <div className="flex items-center gap-1 text-sm">
-                          <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span>
-                            {format(
-                              new Date(appointment.startDateTime),
-                              "MMM d, yyyy",
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Clock className="h-3.5 w-3.5" />
-                          <span>
-                            {format(
-                              new Date(appointment.startDateTime),
-                              "h:mm a",
-                            )}{" "}
-                            -{" "}
-                            {format(
-                              new Date(appointment.endDateTime),
-                              "h:mm a",
-                            )}
-                          </span>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        {appointment.meetingUrl ? (
-                          <>
-                            <Video className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">Video Call</span>
-                          </>
-                        ) : appointment.location ? (
-                          <>
-                            <MapPin className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {appointment.location}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-sm text-muted-foreground">
-                            -
-                          </span>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge className={statusColors[appointment.status]}>
-                        {appointment.status.replace("_", " ")}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={isUpdatingStatus || isDeleting}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Open menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem
-                            onClick={() => onView?.(appointment)}
-                          >
-                            View details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => onEdit?.(appointment)}
-                          >
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {appointment.status === "SCHEDULED" && (
-                            <>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(
-                                    appointment.id,
-                                    "COMPLETED",
-                                  )
-                                }
-                              >
-                                Mark as completed
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(appointment.id, "NO_SHOW")
-                                }
-                              >
-                                Mark as no show
-                              </DropdownMenuItem>
-                              <DropdownMenuItem
-                                onClick={() =>
-                                  handleStatusChange(
-                                    appointment.id,
-                                    "CANCELLED",
-                                  )
-                                }
-                                className="text-red-600"
-                              >
-                                Cancel appointment
-                              </DropdownMenuItem>
-                            </>
+                {appointments.map((appointment: Appointment) => {
+                  const statusConfig = statusProgressConfig[appointment.status];
+                  const StatusIcon = statusConfig.icon;
+                  const isUpdating = updatingStatusId === appointment.id;
+                  const isDeleting = deletingId === appointment.id;
+                  const isScheduled = appointment.status === "SCHEDULED";
+                  const isInProgress = appointment.status === "IN_PROGRESS";
+
+                  return (
+                    <TableRow
+                      key={appointment.id}
+                      className={cn(isUpdating && "opacity-70")}
+                    >
+                      <TableCell>
+                        <div className="space-y-1">
+                          <p className="font-medium">{appointment.title}</p>
+                          {appointment.description && (
+                            <p className="text-sm text-muted-foreground line-clamp-1">
+                              {appointment.description}
+                            </p>
                           )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(appointment.id)}
-                            className="text-red-600"
-                          >
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {appointment.user && (
+                            <p className="text-xs text-muted-foreground">
+                              {appointment.user.email}
+                            </p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-col items-start gap-1">
+                          <div className="flex items-center gap-1 text-sm">
+                            <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span>
+                              {format(
+                                new Date(appointment.startDateTime),
+                                "MMM d, yyyy",
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="h-3.5 w-3.5" />
+                            <span>
+                              {format(
+                                new Date(appointment.startDateTime),
+                                "h:mm a",
+                              )}{" "}
+                              -{" "}
+                              {format(
+                                new Date(appointment.endDateTime),
+                                "h:mm a",
+                              )}
+                            </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          {appointment.meetingUrl ? (
+                            <>
+                              <Video className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">Video Call</span>
+                            </>
+                          ) : appointment.location ? (
+                            <>
+                              <MapPin className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">
+                                {appointment.location}
+                              </span>
+                            </>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">
+                              -
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <Badge className={statusColors[appointment.status]}>
+                            <StatusIcon
+                              className={cn(
+                                "mr-1 h-3 w-3",
+                                statusConfig.color,
+                                isInProgress && "animate-spin",
+                              )}
+                            />
+                            {appointment.status.replace("_", " ")}
+                          </Badge>
+                          {isInProgress && (
+                            <span className="relative flex h-2 w-2">
+                              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                              <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                            </span>
+                          )}
+                          {isUpdating && (
+                            <span className="flex items-center gap-1">
+                              <Spinner className="h-3 w-3" />
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <AppointmentActionsDropdown
+                          appointment={appointment}
+                          isUpdating={isUpdating}
+                          isDeleting={isDeleting}
+                          onView={handleViewClick}
+                          onEdit={handleEditClick}
+                          onStatusChange={handleStatusChange}
+                          onDelete={handleDeleteClick}
+                          variant="table"
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                \
               </TableBody>
             </Table>
           </div>
@@ -613,6 +626,36 @@ export function AppointmentList({
           </p>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Appointment</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this appointment? This action
+              cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              disabled={!!deletingId}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deletingId ? (
+                <>
+                  <Spinner className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

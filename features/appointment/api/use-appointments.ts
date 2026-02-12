@@ -4,6 +4,7 @@ import { client } from "@/lib/api/hono-client";
 import type {
   Appointment,
   AppointmentStatus,
+  UpdateAppointmentStatus,
   AppointmentListParams,
   AppointmentListResponse,
   AppointmentResponse,
@@ -274,6 +275,7 @@ export function useAppointmentStats() {
 export type {
   Appointment,
   AppointmentStatus,
+  UpdateAppointmentStatus,
   AppointmentListParams,
   AppointmentListResponse,
   AppointmentResponse,

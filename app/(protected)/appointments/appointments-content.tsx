@@ -38,15 +38,15 @@ export function AppointmentsContent() {
   const [search, setSearch] = useState(initialSearch);
 
   const handleCreate = () => {
-    router.push("/dashboard/appointments/new");
+    router.push("/appointments/new");
   };
 
   const handleEdit = (appointment: Appointment) => {
-    router.push(`/dashboard/appointments/${appointment.id}/edit`);
+    router.push(`/appointments/${appointment.id}/edit`);
   };
 
   const handleView = (appointment: Appointment) => {
-    router.push(`/dashboard/appointments/${appointment.id}`);
+    router.push(`/appointments/${appointment.id}`);
   };
 
   const handleSearch = (value: string) => {

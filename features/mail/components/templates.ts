@@ -157,7 +157,7 @@ export const emailTemplates = {
       <p style="text-align: center; font-size: 18px; color: #475569; margin-bottom: 30px;">Your ${getAppName()} account has been successfully created and verified. You're all set to start exploring!</p>
 
       <div style="text-align: center;">
-        <a href="${appUrl}/dashboard/settings" class="button">Go to Your Profile</a>
+        <a href="${appUrl}/settings" class="button">Go to Your Profile</a>
       </div>
 
       <p>Here's what you can do next:</p>

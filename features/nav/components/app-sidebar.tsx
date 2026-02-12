@@ -39,36 +39,36 @@ const data = {
     },
     {
       title: "Appointments",
-      url: "/dashboard/appointments",
+      url: "/appointments",
       icon: Calendar,
       isActive: false,
       items: [
         {
           title: "All Appointments",
-          url: "/dashboard/appointments",
+          url: "/appointments",
         },
         {
           title: "Upcoming",
-          url: "/dashboard/appointments?status=SCHEDULED",
+          url: "/appointments?status=SCHEDULED",
         },
         {
           title: "Completed",
-          url: "/dashboard/appointments?status=COMPLETED",
+          url: "/appointments?status=COMPLETED",
         },
         {
           title: "Cancelled",
-          url: "/dashboard/appointments?status=CANCELLED",
+          url: "/appointments?status=CANCELLED",
         },
       ],
     },
     {
       title: "Settings",
-      url: "/dashboard/settings",
+      url: "/settings",
       icon: Settings2,
       items: [
         {
           title: "General",
-          url: "/dashboard/settings",
+          url: "/settings",
         },
       ],
     },

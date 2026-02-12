@@ -61,7 +61,7 @@ export function VerifyEmailPage({
             variant="outline"
             className="w-full"
             onClick={() => {
-              window.location.href = "/dashboard/settings";
+              window.location.href = "/settings";
             }}
           >
             Complete Your Profile
