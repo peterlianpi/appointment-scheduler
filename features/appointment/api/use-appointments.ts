@@ -1,10 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+
 import { client } from "@/lib/api/hono-client";
 import type {
-  Appointment,
-  AppointmentStatus,
-  UpdateAppointmentStatus,
   AppointmentListParams,
   AppointmentListResponse,
   AppointmentResponse,
@@ -117,10 +114,6 @@ export function useCreateAppointment() {
       // Invalidate all appointment-related queries to ensure list refresh
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
-      toast.success("Appointment created successfully");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 }
@@ -151,10 +144,6 @@ export function useUpdateAppointment() {
       // Invalidate all appointment-related queries to ensure list refresh
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
-      toast.success("Appointment updated successfully");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 }
@@ -189,10 +178,6 @@ export function useUpdateAppointmentStatus() {
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.detail(id) });
-      toast.success("Status updated successfully");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 }
@@ -221,10 +206,6 @@ export function useDeleteAppointment() {
       // Invalidate all appointment-related queries to ensure list refresh
       queryClient.invalidateQueries({ queryKey: appointmentKeys.all });
       queryClient.invalidateQueries({ queryKey: appointmentKeys.lists() });
-      toast.success("Appointment deleted successfully");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
     },
   });
 }

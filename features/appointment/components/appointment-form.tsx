@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { FormProvider } from "react-hook-form";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -103,8 +104,11 @@ export function AppointmentFormDialog({
       }
       onOpenChange(false);
       onSuccess?.();
-    } catch {
-      // Error is handled by the mutation hook
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "Failed to create/update appointment";
+      toast.error(errorMessage);
     }
   };
 

@@ -131,8 +131,11 @@ export function AppointmentFormStandalone({
       }
       router.push("/appointments");
       onSuccess?.();
-    } catch {
-      toast.error("Failed to create/update appointment");
+    } catch (error) {
+      const errorMessage = error instanceof Error
+        ? error.message
+        : "Failed to create/update appointment";
+      toast.error(errorMessage);
     }
   };
 

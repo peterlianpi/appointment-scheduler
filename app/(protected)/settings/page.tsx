@@ -275,7 +275,7 @@ export default function SettingsPage() {
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="outline"
-                    className="w-full justify-start h-11"
+                    className=" justify-start h-11"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span className="truncate">Sign out of other devices</span>
@@ -304,7 +304,7 @@ export default function SettingsPage() {
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="destructive"
-                    className="w-full justify-start h-11"
+                    className=" justify-start h-11"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span className="truncate">Sign out of all devices</span>
