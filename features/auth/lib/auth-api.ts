@@ -25,10 +25,7 @@ export async function login(
 
     if (error) {
       // Check if this is an email verification error
-      if (
-        error.status === 403 ||
-        error.message?.toLowerCase().includes("verify")
-      ) {
+      if (error.message?.toLowerCase().includes("verify")) {
         return {
           success: false,
           error:

@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { NativeSelect } from "@/components/ui/native-select";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -34,10 +35,16 @@ import {
   Laptop,
   LogOut,
   RefreshCw,
+  Loader2,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useSessions } from "@/features/auth/hooks/use-sessions";
+import {
+  useUserPreferences,
+  useUpdatePreferences,
+  REMINDER_TIME_OPTIONS,
+} from "@/features/preferences/api/use-preferences";
 
 export default function SettingsPage() {
   const {
@@ -47,11 +54,43 @@ export default function SettingsPage() {
     signOutSession,
     signOutAllDevices,
   } = useSessions();
-  const [isRefreshing, setIsRefreshing] = useState(false);
 
+  const { data: preferences, isLoading: isLoadingPrefs } = useUserPreferences();
+  const updatePreferences = useUpdatePreferences();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [localPrefs, setLocalPrefs] = useState({
+    reminderEnabled: true,
+    reminderHoursBefore: 24,
+    emailReminders: true,
+    inAppReminders: true,
+    appointmentCreatedNotif: true,
+    appointmentRescheduledNotif: true,
+    appointmentCancelledNotif: true,
+  });
+
+  // Sync local state with fetched preferences
   useEffect(() => {
-    refreshSessions();
-  }, [refreshSessions]);
+    if (preferences) {
+      setLocalPrefs((prev) => ({
+        ...prev,
+        ...preferences,
+      }));
+    }
+  }, [preferences]);
+
+  const handlePreferenceChange = (key: string, value: boolean | number) => {
+    setLocalPrefs((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleSavePreferences = async () => {
+    setIsSaving(true);
+    try {
+      await updatePreferences.mutateAsync(localPrefs);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -166,7 +205,7 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div className="space-y-0.5">
                 <Label>Current Sessions</Label>
                 <p className="text-sm text-muted-foreground">
@@ -180,40 +219,44 @@ export default function SettingsPage() {
                 size="sm"
                 onClick={handleRefresh}
                 disabled={isRefreshing}
+                className="w-full sm:w-auto h-10"
               >
                 <RefreshCw
                   className={`mr-2 h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
                 />
-                Refresh
+                <span className="sm:hidden">Refresh</span>
               </Button>
             </div>
 
             {sessions.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {sessions.slice(0, 5).map((session) => (
                   <div
                     key={session.id}
-                    className="flex items-center justify-between p-3 border rounded-lg"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between p-4 border rounded-lg gap-3"
                   >
-                    <div className="flex items-center gap-3">
-                      <Laptop className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">
+                    <div className="flex items-start gap-3 min-w-0">
+                      <Laptop className="h-5 w-5 text-muted-foreground mt-0.5 flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">
                           {getDeviceInfo(session.userAgent)}
                         </p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="text-xs text-muted-foreground truncate">
                           {session.ipAddress || "Unknown IP"} •{" "}
                           {formatSessionDate(session.createdAt)}
                         </p>
                       </div>
                     </div>
                     <Button
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={() => signOutSession(session.id)}
                       disabled={isLoading}
+                      className="sm:flex-shrink-0 w-full sm:w-auto h-10 sm:h-9"
                     >
-                      <LogOut className="h-4 w-4" />
+                      <LogOut className="h-4 w-4 mr-2 sm:mr-0 sm:hidden" />
+                      <span className="sm:hidden">Sign Out</span>
+                      <LogOut className="h-4 w-4 hidden sm:block" />
                     </Button>
                   </div>
                 ))}
@@ -227,12 +270,15 @@ export default function SettingsPage() {
 
             <Separator />
 
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col sm:flex-row gap-3">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="outline" className="w-full justify-start">
+                  <Button
+                    variant="outline"
+                    className="w-full justify-start h-11"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign out of other devices
+                    <span className="truncate">Sign out of other devices</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -258,10 +304,10 @@ export default function SettingsPage() {
                 <AlertDialogTrigger asChild>
                   <Button
                     variant="destructive"
-                    className="w-full justify-start"
+                    className="w-full justify-start h-11"
                   >
                     <LogOut className="mr-2 h-4 w-4" />
-                    Sign out of all devices
+                    <span className="truncate">Sign out of all devices</span>
                   </Button>
                 </AlertDialogTrigger>
                 <AlertDialogContent>
@@ -308,7 +354,13 @@ export default function SettingsPage() {
                   Receive appointment reminders via email
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch
+                checked={localPrefs.emailReminders}
+                onCheckedChange={(checked) =>
+                  handlePreferenceChange("emailReminders", checked)
+                }
+                disabled={isLoadingPrefs}
+              />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -317,7 +369,13 @@ export default function SettingsPage() {
                   Show push notifications in your browser
                 </p>
               </div>
-              <Switch />
+              <Switch
+                checked={localPrefs.inAppReminders}
+                onCheckedChange={(checked) =>
+                  handlePreferenceChange("inAppReminders", checked)
+                }
+                disabled={isLoadingPrefs}
+              />
             </div>
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
@@ -326,8 +384,49 @@ export default function SettingsPage() {
                   Get reminded before scheduled appointments
                 </p>
               </div>
-              <Switch defaultChecked />
+              <Switch
+                checked={localPrefs.reminderEnabled}
+                onCheckedChange={(checked) =>
+                  handlePreferenceChange("reminderEnabled", checked)
+                }
+                disabled={isLoadingPrefs}
+              />
             </div>
+            {localPrefs.reminderEnabled && (
+              <div className="space-y-2">
+                <Label htmlFor="reminderTime">Remind me before</Label>
+                <NativeSelect
+                  id="reminderTime"
+                  value={localPrefs.reminderHoursBefore.toString()}
+                  onChange={(e) =>
+                    handlePreferenceChange(
+                      "reminderHoursBefore",
+                      parseInt(e.target.value),
+                    )
+                  }
+                  disabled={isLoadingPrefs}
+                >
+                  {REMINDER_TIME_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </NativeSelect>
+              </div>
+            )}
+            <Button
+              onClick={handleSavePreferences}
+              disabled={isLoadingPrefs || isSaving}
+            >
+              {isSaving ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Notification Settings"
+              )}
+            </Button>
           </CardContent>
         </Card>
 
@@ -410,7 +509,9 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Button variant="destructive">Delete Account</Button>
+            <Button variant="destructive" className="w-full sm:w-auto h-11">
+              Delete Account
+            </Button>
           </CardContent>
         </Card>
       </div>

@@ -259,12 +259,11 @@ export async function sendBulkReminders(options?: {
       `[AppointmentMail] TEST MODE: Looking for appointments between ${startWindow.toISOString()} and ${endWindow.toISOString()}`,
     );
   } else {
-    // Normal mode: look for appointments in the next 1-2 hours by default
-    // This will catch appointments at various reminder intervals
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
-    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    startWindow = oneHourFromNow;
-    endWindow = twoHoursFromNow;
+    // Normal mode: query appointments in the next 7 days (max reminder window)
+    // We'll filter by each user's reminderHoursBefore preference later
+    const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    startWindow = now;
+    endWindow = sevenDaysFromNow;
   }
 
   try {
@@ -307,6 +306,34 @@ export async function sendBulkReminders(options?: {
             `[AppointmentMail] Reminders disabled for user ${appointment.userId}, skipping appointment ${appointment.id}`,
           );
           continue;
+        }
+
+        // Check if appointment is within the user's reminder window
+        const reminderWindowMs =
+          preferences.reminderHoursBefore * 60 * 60 * 1000;
+        const timeUntilAppointment =
+          appointment.startDateTime.getTime() - now.getTime();
+
+        if (timeUntilAppointment > reminderWindowMs) {
+          // Appointment is too far in the future, skip for now
+          console.log(
+            `[AppointmentMail] Appointment ${appointment.id} is ${Math.round(timeUntilAppointment / (60 * 60 * 1000))}h away, user wants reminder at ${preferences.reminderHoursBefore}h, skipping`,
+          );
+          continue;
+        }
+
+        // Check if we've already sent a reminder too recently (within 1 hour)
+        // This prevents duplicate reminders if the cron runs frequently
+        if (appointment.reminderSent && appointment.reminderSentAt) {
+          const timeSinceReminder =
+            now.getTime() - appointment.reminderSentAt.getTime();
+          if (timeSinceReminder < 60 * 60 * 1000) {
+            // Already sent reminder within the last hour, skip
+            console.log(
+              `[AppointmentMail] Reminder already sent for appointment ${appointment.id} within the last hour, skipping`,
+            );
+            continue;
+          }
         }
 
         const emailData = buildEmailData(appointment);

@@ -70,10 +70,7 @@ export function LoginForm({
 
       if (error) {
         // Check if this is an email verification error
-        if (
-          error.status === 403 ||
-          error.message?.toLowerCase().includes("verify")
-        ) {
+        if (error.message?.toLowerCase().includes("verify")) {
           setError("root", {
             message:
               "Please verify your email address before logging in. Check your email for the verification link.",
@@ -190,12 +187,16 @@ export function LoginForm({
                     <p className="text-sm text-red-500">
                       {form.formState.errors.root.message}
                     </p>
+                    {/* Only show resend verification link for actual verification errors */}
                     {(form.formState.errors.root.message
                       ?.toLowerCase()
-                      .includes("verify") ||
+                      .includes("verify your email") ||
                       form.formState.errors.root.message
                         ?.toLowerCase()
-                        .includes("email")) && (
+                        .includes("verification required") ||
+                      form.formState.errors.root.message
+                        ?.toLowerCase()
+                        .includes("email not verified")) && (
                       <p className="text-sm text-blue-600">
                         <a
                           href="/verification-pending"
