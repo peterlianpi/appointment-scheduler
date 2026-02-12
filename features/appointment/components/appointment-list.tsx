@@ -88,6 +88,9 @@ interface AppointmentListProps {
   onPageChange?: (page: number) => void;
   onSearchChange?: (search: string) => void;
   onDateRangeTypeChange?: (type: "upcoming" | "past" | "all") => void;
+  // Admin reminder props
+  onSendReminder?: (appointmentId: string) => void;
+  isSendingReminder?: boolean;
 }
 
 export function AppointmentList({
@@ -104,6 +107,8 @@ export function AppointmentList({
   onPageChange,
   onSearchChange,
   onDateRangeTypeChange,
+  onSendReminder,
+  isSendingReminder,
 }: AppointmentListProps) {
   // Use controlled statuses if provided, otherwise use internal state
   const [internalStatuses, setInternalStatuses] = useState<string[]>([]);
@@ -553,10 +558,12 @@ export function AppointmentList({
                           appointment={appointment}
                           isUpdating={isUpdating}
                           isDeleting={isDeleting}
+                          isSendingReminder={isSendingReminder}
                           onView={handleViewClick}
                           onEdit={handleEditClick}
                           onStatusChange={handleStatusChange}
                           onDelete={handleDeleteClick}
+                          onSendReminder={onSendReminder}
                           variant="table"
                         />
                       </TableCell>

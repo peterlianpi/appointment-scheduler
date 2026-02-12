@@ -169,6 +169,60 @@ export async function sendReminder(params: SendReminderParams): Promise<void> {
 }
 
 // ============================================
+// Admin Users Types
+// ============================================
+
+export interface AdminUsersParams {
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  emailVerified: boolean;
+  createdAt: string;
+  _count: {
+    appointments: number;
+  };
+}
+
+export interface AdminUsersResponse {
+  success: boolean;
+  data: {
+    users: AdminUser[];
+    meta: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  };
+}
+
+// ============================================
+// Admin Users Helper
+// ============================================
+
+export async function getAdminUsers(params: AdminUsersParams = {}): Promise<AdminUsersResponse> {
+  const query: Record<string, string> = {};
+  if (params.search) query.search = params.search;
+  if (params.page) query.page = params.page.toString();
+  if (params.limit) query.limit = params.limit.toString();
+
+  const response = await client.api.admin.users.$get({ query });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch users");
+  }
+
+  return (await response.json()) as AdminUsersResponse;
+}
+
+// ============================================
 // Admin Stats Types
 // ============================================
 

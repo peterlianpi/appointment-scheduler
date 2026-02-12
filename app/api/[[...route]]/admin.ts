@@ -400,6 +400,102 @@ const app = new Hono()
         );
       }
     },
+  )
+  // ============================================
+  // GET /api/admin/users - Get all users (Admin only)
+  // ============================================
+  .get(
+    "/users",
+    zValidator(
+      "query",
+      z.object({
+        search: z.string().optional(),
+        page: z.string().optional(),
+        limit: z.string().optional(),
+      }),
+    ),
+    async (c) => {
+      try {
+        const isAdminUser = await checkIsAdmin(c);
+        if (!isAdminUser) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "UNAUTHORIZED",
+                message: "Authentication required",
+              },
+            },
+            401,
+          );
+        }
+
+        const { search, page = "1", limit = "10" } = c.req.valid("query");
+        const pageNum = parseInt(page, 10);
+        const limitNum = parseInt(limit, 10);
+        const skip = (pageNum - 1) * limitNum;
+
+        // Build where clause
+        const where: Record<string, unknown> = {
+          deletedAt: null,
+        };
+
+        if (search) {
+          where.OR = [
+            { name: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+          ];
+        }
+
+        const [users, total] = await Promise.all([
+          prisma.user.findMany({
+            where,
+            skip,
+            take: limitNum,
+            orderBy: { createdAt: "desc" },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+              emailVerified: true,
+              createdAt: true,
+              _count: {
+                select: {
+                  appointments: true,
+                },
+              },
+            },
+          }),
+          prisma.user.count({ where }),
+        ]);
+
+        return c.json({
+          success: true,
+          data: {
+            users,
+            meta: {
+              total,
+              page: pageNum,
+              limit: limitNum,
+              totalPages: Math.ceil(total / limitNum),
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Admin users error:", error);
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: "Failed to fetch users",
+            },
+          },
+          500,
+        );
+      }
+    },
   );
 
 export default app;
