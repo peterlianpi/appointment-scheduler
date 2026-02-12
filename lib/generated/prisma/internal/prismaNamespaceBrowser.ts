@@ -202,6 +202,8 @@ export type NotificationScalarFieldEnum = (typeof NotificationScalarFieldEnum)[k
 export const UserPreferencesScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
+  defaultDuration: 'defaultDuration',
+  bufferTime: 'bufferTime',
   reminderEnabled: 'reminderEnabled',
   reminderHoursBefore: 'reminderHoursBefore',
   emailReminders: 'emailReminders',

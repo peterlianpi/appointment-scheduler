@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/api/hono-client";
 
 export interface UserPreferences {
+  // Notification settings
   reminderEnabled: boolean;
   reminderHoursBefore: number;
   emailReminders: boolean;
@@ -9,6 +10,9 @@ export interface UserPreferences {
   appointmentCreatedNotif: boolean;
   appointmentRescheduledNotif: boolean;
   appointmentCancelledNotif: boolean;
+  // Appointment default settings
+  defaultDuration: number;
+  bufferTime: number;
 }
 
 // Response types

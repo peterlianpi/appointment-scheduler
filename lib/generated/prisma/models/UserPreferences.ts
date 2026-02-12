@@ -27,16 +27,22 @@ export type AggregateUserPreferences = {
 }
 
 export type UserPreferencesAvgAggregateOutputType = {
+  defaultDuration: number | null
+  bufferTime: number | null
   reminderHoursBefore: number | null
 }
 
 export type UserPreferencesSumAggregateOutputType = {
+  defaultDuration: number | null
+  bufferTime: number | null
   reminderHoursBefore: number | null
 }
 
 export type UserPreferencesMinAggregateOutputType = {
   id: string | null
   userId: string | null
+  defaultDuration: number | null
+  bufferTime: number | null
   reminderEnabled: boolean | null
   reminderHoursBefore: number | null
   emailReminders: boolean | null
@@ -51,6 +57,8 @@ export type UserPreferencesMinAggregateOutputType = {
 export type UserPreferencesMaxAggregateOutputType = {
   id: string | null
   userId: string | null
+  defaultDuration: number | null
+  bufferTime: number | null
   reminderEnabled: boolean | null
   reminderHoursBefore: number | null
   emailReminders: boolean | null
@@ -65,6 +73,8 @@ export type UserPreferencesMaxAggregateOutputType = {
 export type UserPreferencesCountAggregateOutputType = {
   id: number
   userId: number
+  defaultDuration: number
+  bufferTime: number
   reminderEnabled: number
   reminderHoursBefore: number
   emailReminders: number
@@ -79,16 +89,22 @@ export type UserPreferencesCountAggregateOutputType = {
 
 
 export type UserPreferencesAvgAggregateInputType = {
+  defaultDuration?: true
+  bufferTime?: true
   reminderHoursBefore?: true
 }
 
 export type UserPreferencesSumAggregateInputType = {
+  defaultDuration?: true
+  bufferTime?: true
   reminderHoursBefore?: true
 }
 
 export type UserPreferencesMinAggregateInputType = {
   id?: true
   userId?: true
+  defaultDuration?: true
+  bufferTime?: true
   reminderEnabled?: true
   reminderHoursBefore?: true
   emailReminders?: true
@@ -103,6 +119,8 @@ export type UserPreferencesMinAggregateInputType = {
 export type UserPreferencesMaxAggregateInputType = {
   id?: true
   userId?: true
+  defaultDuration?: true
+  bufferTime?: true
   reminderEnabled?: true
   reminderHoursBefore?: true
   emailReminders?: true
@@ -117,6 +135,8 @@ export type UserPreferencesMaxAggregateInputType = {
 export type UserPreferencesCountAggregateInputType = {
   id?: true
   userId?: true
+  defaultDuration?: true
+  bufferTime?: true
   reminderEnabled?: true
   reminderHoursBefore?: true
   emailReminders?: true
@@ -218,6 +238,8 @@ export type UserPreferencesGroupByArgs<ExtArgs extends runtime.Types.Extensions.
 export type UserPreferencesGroupByOutputType = {
   id: string
   userId: string
+  defaultDuration: number
+  bufferTime: number
   reminderEnabled: boolean
   reminderHoursBefore: number
   emailReminders: boolean
@@ -255,6 +277,8 @@ export type UserPreferencesWhereInput = {
   NOT?: Prisma.UserPreferencesWhereInput | Prisma.UserPreferencesWhereInput[]
   id?: Prisma.StringFilter<"UserPreferences"> | string
   userId?: Prisma.StringFilter<"UserPreferences"> | string
+  defaultDuration?: Prisma.IntFilter<"UserPreferences"> | number
+  bufferTime?: Prisma.IntFilter<"UserPreferences"> | number
   reminderEnabled?: Prisma.BoolFilter<"UserPreferences"> | boolean
   reminderHoursBefore?: Prisma.IntFilter<"UserPreferences"> | number
   emailReminders?: Prisma.BoolFilter<"UserPreferences"> | boolean
@@ -270,6 +294,8 @@ export type UserPreferencesWhereInput = {
 export type UserPreferencesOrderByWithRelationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  defaultDuration?: Prisma.SortOrder
+  bufferTime?: Prisma.SortOrder
   reminderEnabled?: Prisma.SortOrder
   reminderHoursBefore?: Prisma.SortOrder
   emailReminders?: Prisma.SortOrder
@@ -288,6 +314,8 @@ export type UserPreferencesWhereUniqueInput = Prisma.AtLeast<{
   AND?: Prisma.UserPreferencesWhereInput | Prisma.UserPreferencesWhereInput[]
   OR?: Prisma.UserPreferencesWhereInput[]
   NOT?: Prisma.UserPreferencesWhereInput | Prisma.UserPreferencesWhereInput[]
+  defaultDuration?: Prisma.IntFilter<"UserPreferences"> | number
+  bufferTime?: Prisma.IntFilter<"UserPreferences"> | number
   reminderEnabled?: Prisma.BoolFilter<"UserPreferences"> | boolean
   reminderHoursBefore?: Prisma.IntFilter<"UserPreferences"> | number
   emailReminders?: Prisma.BoolFilter<"UserPreferences"> | boolean
@@ -303,6 +331,8 @@ export type UserPreferencesWhereUniqueInput = Prisma.AtLeast<{
 export type UserPreferencesOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  defaultDuration?: Prisma.SortOrder
+  bufferTime?: Prisma.SortOrder
   reminderEnabled?: Prisma.SortOrder
   reminderHoursBefore?: Prisma.SortOrder
   emailReminders?: Prisma.SortOrder
@@ -325,6 +355,8 @@ export type UserPreferencesScalarWhereWithAggregatesInput = {
   NOT?: Prisma.UserPreferencesScalarWhereWithAggregatesInput | Prisma.UserPreferencesScalarWhereWithAggregatesInput[]
   id?: Prisma.StringWithAggregatesFilter<"UserPreferences"> | string
   userId?: Prisma.StringWithAggregatesFilter<"UserPreferences"> | string
+  defaultDuration?: Prisma.IntWithAggregatesFilter<"UserPreferences"> | number
+  bufferTime?: Prisma.IntWithAggregatesFilter<"UserPreferences"> | number
   reminderEnabled?: Prisma.BoolWithAggregatesFilter<"UserPreferences"> | boolean
   reminderHoursBefore?: Prisma.IntWithAggregatesFilter<"UserPreferences"> | number
   emailReminders?: Prisma.BoolWithAggregatesFilter<"UserPreferences"> | boolean
@@ -338,6 +370,8 @@ export type UserPreferencesScalarWhereWithAggregatesInput = {
 
 export type UserPreferencesCreateInput = {
   id?: string
+  defaultDuration?: number
+  bufferTime?: number
   reminderEnabled?: boolean
   reminderHoursBefore?: number
   emailReminders?: boolean
@@ -353,6 +387,8 @@ export type UserPreferencesCreateInput = {
 export type UserPreferencesUncheckedCreateInput = {
   id?: string
   userId: string
+  defaultDuration?: number
+  bufferTime?: number
   reminderEnabled?: boolean
   reminderHoursBefore?: number
   emailReminders?: boolean
@@ -366,6 +402,8 @@ export type UserPreferencesUncheckedCreateInput = {
 
 export type UserPreferencesUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
+  bufferTime?: Prisma.IntFieldUpdateOperationsInput | number
   reminderEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reminderHoursBefore?: Prisma.IntFieldUpdateOperationsInput | number
   emailReminders?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -381,6 +419,8 @@ export type UserPreferencesUpdateInput = {
 export type UserPreferencesUncheckedUpdateInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
+  bufferTime?: Prisma.IntFieldUpdateOperationsInput | number
   reminderEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reminderHoursBefore?: Prisma.IntFieldUpdateOperationsInput | number
   emailReminders?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -395,6 +435,8 @@ export type UserPreferencesUncheckedUpdateInput = {
 export type UserPreferencesCreateManyInput = {
   id?: string
   userId: string
+  defaultDuration?: number
+  bufferTime?: number
   reminderEnabled?: boolean
   reminderHoursBefore?: number
   emailReminders?: boolean
@@ -408,6 +450,8 @@ export type UserPreferencesCreateManyInput = {
 
 export type UserPreferencesUpdateManyMutationInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
+  bufferTime?: Prisma.IntFieldUpdateOperationsInput | number
   reminderEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reminderHoursBefore?: Prisma.IntFieldUpdateOperationsInput | number
   emailReminders?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -422,6 +466,8 @@ export type UserPreferencesUpdateManyMutationInput = {
 export type UserPreferencesUncheckedUpdateManyInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
+  bufferTime?: Prisma.IntFieldUpdateOperationsInput | number
   reminderEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reminderHoursBefore?: Prisma.IntFieldUpdateOperationsInput | number
   emailReminders?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -441,6 +487,8 @@ export type UserPreferencesNullableScalarRelationFilter = {
 export type UserPreferencesCountOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  defaultDuration?: Prisma.SortOrder
+  bufferTime?: Prisma.SortOrder
   reminderEnabled?: Prisma.SortOrder
   reminderHoursBefore?: Prisma.SortOrder
   emailReminders?: Prisma.SortOrder
@@ -453,12 +501,16 @@ export type UserPreferencesCountOrderByAggregateInput = {
 }
 
 export type UserPreferencesAvgOrderByAggregateInput = {
+  defaultDuration?: Prisma.SortOrder
+  bufferTime?: Prisma.SortOrder
   reminderHoursBefore?: Prisma.SortOrder
 }
 
 export type UserPreferencesMaxOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  defaultDuration?: Prisma.SortOrder
+  bufferTime?: Prisma.SortOrder
   reminderEnabled?: Prisma.SortOrder
   reminderHoursBefore?: Prisma.SortOrder
   emailReminders?: Prisma.SortOrder
@@ -473,6 +525,8 @@ export type UserPreferencesMaxOrderByAggregateInput = {
 export type UserPreferencesMinOrderByAggregateInput = {
   id?: Prisma.SortOrder
   userId?: Prisma.SortOrder
+  defaultDuration?: Prisma.SortOrder
+  bufferTime?: Prisma.SortOrder
   reminderEnabled?: Prisma.SortOrder
   reminderHoursBefore?: Prisma.SortOrder
   emailReminders?: Prisma.SortOrder
@@ -485,6 +539,8 @@ export type UserPreferencesMinOrderByAggregateInput = {
 }
 
 export type UserPreferencesSumOrderByAggregateInput = {
+  defaultDuration?: Prisma.SortOrder
+  bufferTime?: Prisma.SortOrder
   reminderHoursBefore?: Prisma.SortOrder
 }
 
@@ -522,6 +578,8 @@ export type UserPreferencesUncheckedUpdateOneWithoutUserNestedInput = {
 
 export type UserPreferencesCreateWithoutUserInput = {
   id?: string
+  defaultDuration?: number
+  bufferTime?: number
   reminderEnabled?: boolean
   reminderHoursBefore?: number
   emailReminders?: boolean
@@ -535,6 +593,8 @@ export type UserPreferencesCreateWithoutUserInput = {
 
 export type UserPreferencesUncheckedCreateWithoutUserInput = {
   id?: string
+  defaultDuration?: number
+  bufferTime?: number
   reminderEnabled?: boolean
   reminderHoursBefore?: number
   emailReminders?: boolean
@@ -564,6 +624,8 @@ export type UserPreferencesUpdateToOneWithWhereWithoutUserInput = {
 
 export type UserPreferencesUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
+  bufferTime?: Prisma.IntFieldUpdateOperationsInput | number
   reminderEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reminderHoursBefore?: Prisma.IntFieldUpdateOperationsInput | number
   emailReminders?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -577,6 +639,8 @@ export type UserPreferencesUpdateWithoutUserInput = {
 
 export type UserPreferencesUncheckedUpdateWithoutUserInput = {
   id?: Prisma.StringFieldUpdateOperationsInput | string
+  defaultDuration?: Prisma.IntFieldUpdateOperationsInput | number
+  bufferTime?: Prisma.IntFieldUpdateOperationsInput | number
   reminderEnabled?: Prisma.BoolFieldUpdateOperationsInput | boolean
   reminderHoursBefore?: Prisma.IntFieldUpdateOperationsInput | number
   emailReminders?: Prisma.BoolFieldUpdateOperationsInput | boolean
@@ -593,6 +657,8 @@ export type UserPreferencesUncheckedUpdateWithoutUserInput = {
 export type UserPreferencesSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  defaultDuration?: boolean
+  bufferTime?: boolean
   reminderEnabled?: boolean
   reminderHoursBefore?: boolean
   emailReminders?: boolean
@@ -608,6 +674,8 @@ export type UserPreferencesSelect<ExtArgs extends runtime.Types.Extensions.Inter
 export type UserPreferencesSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  defaultDuration?: boolean
+  bufferTime?: boolean
   reminderEnabled?: boolean
   reminderHoursBefore?: boolean
   emailReminders?: boolean
@@ -623,6 +691,8 @@ export type UserPreferencesSelectCreateManyAndReturn<ExtArgs extends runtime.Typ
 export type UserPreferencesSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   userId?: boolean
+  defaultDuration?: boolean
+  bufferTime?: boolean
   reminderEnabled?: boolean
   reminderHoursBefore?: boolean
   emailReminders?: boolean
@@ -638,6 +708,8 @@ export type UserPreferencesSelectUpdateManyAndReturn<ExtArgs extends runtime.Typ
 export type UserPreferencesSelectScalar = {
   id?: boolean
   userId?: boolean
+  defaultDuration?: boolean
+  bufferTime?: boolean
   reminderEnabled?: boolean
   reminderHoursBefore?: boolean
   emailReminders?: boolean
@@ -649,7 +721,7 @@ export type UserPreferencesSelectScalar = {
   updatedAt?: boolean
 }
 
-export type UserPreferencesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "reminderEnabled" | "reminderHoursBefore" | "emailReminders" | "inAppReminders" | "appointmentCreatedNotif" | "appointmentRescheduledNotif" | "appointmentCancelledNotif" | "createdAt" | "updatedAt", ExtArgs["result"]["userPreferences"]>
+export type UserPreferencesOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "userId" | "defaultDuration" | "bufferTime" | "reminderEnabled" | "reminderHoursBefore" | "emailReminders" | "inAppReminders" | "appointmentCreatedNotif" | "appointmentRescheduledNotif" | "appointmentCancelledNotif" | "createdAt" | "updatedAt", ExtArgs["result"]["userPreferences"]>
 export type UserPreferencesInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   user?: boolean | Prisma.UserDefaultArgs<ExtArgs>
 }
@@ -668,6 +740,8 @@ export type $UserPreferencesPayload<ExtArgs extends runtime.Types.Extensions.Int
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     userId: string
+    defaultDuration: number
+    bufferTime: number
     reminderEnabled: boolean
     reminderHoursBefore: number
     emailReminders: boolean
@@ -1103,6 +1177,8 @@ export interface Prisma__UserPreferencesClient<T, Null = never, ExtArgs extends 
 export interface UserPreferencesFieldRefs {
   readonly id: Prisma.FieldRef<"UserPreferences", 'String'>
   readonly userId: Prisma.FieldRef<"UserPreferences", 'String'>
+  readonly defaultDuration: Prisma.FieldRef<"UserPreferences", 'Int'>
+  readonly bufferTime: Prisma.FieldRef<"UserPreferences", 'Int'>
   readonly reminderEnabled: Prisma.FieldRef<"UserPreferences", 'Boolean'>
   readonly reminderHoursBefore: Prisma.FieldRef<"UserPreferences", 'Int'>
   readonly emailReminders: Prisma.FieldRef<"UserPreferences", 'Boolean'>

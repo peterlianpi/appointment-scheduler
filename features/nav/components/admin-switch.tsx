@@ -15,30 +15,21 @@ import {
 import { useSidebar } from "@/components/ui/sidebar";
 import { checkAdminRole } from "@/lib/api/hono-client";
 
-export function AdminSwitch() {
+interface AdminSwitchProps {
+  /** Admin status from parent - if not provided, component won't render */
+  isAdmin?: boolean;
+  /** Optional: show loading state */
+  isLoading?: boolean;
+}
+
+export function AdminSwitch({ isAdmin, isLoading }: AdminSwitchProps) {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const [isAdmin, setIsAdmin] = useState(false);
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
-
-  // Check if we're on any admin page
   const isAdminPage = pathname.startsWith("/admin");
 
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (session?.user) {
-        const adminStatus = await checkAdminRole();
-        setIsAdmin(adminStatus);
-      } else {
-        setIsAdmin(false);
-      }
-    };
-    checkAdmin();
-  }, [session?.user]);
-
-  // Don't render if not admin
-  if (!isAdmin) {
+  // Don't render if not admin or still loading
+  if (isLoading || !isAdmin) {
     return null;
   }
 
@@ -81,4 +72,34 @@ export function AdminSwitch() {
       </div>
     </TooltipProvider>
   );
+}
+
+/**
+ * Hook to check admin status - used by parent components
+ * Checks directly from API without caching
+ */
+export function useAdminStatus(): boolean | null {
+  const { data: session } = useSession();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      if (!session?.user) {
+        setIsAdmin(false);
+        return;
+      }
+
+      // Fetch from API
+      try {
+        const adminStatus = await checkAdminRole();
+        setIsAdmin(adminStatus);
+      } catch {
+        setIsAdmin(false);
+      }
+    };
+
+    checkAdmin();
+  }, [session?.user]);
+
+  return isAdmin;
 }

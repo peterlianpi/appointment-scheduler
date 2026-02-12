@@ -288,6 +288,10 @@ model UserPreferences {
   userId String @unique
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Appointment default settings
+  defaultDuration Int @default(30) // Default duration in minutes
+  bufferTime      Int @default(5) // Buffer between appointments in minutes
+
   // Reminder preferences
   reminderEnabled     Boolean @default(true)
   reminderHoursBefore Int     @default(24) // Hours before appointment to send reminder

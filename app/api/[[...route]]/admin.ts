@@ -50,7 +50,13 @@ async function checkIsAdmin(c: Context): Promise<boolean> {
     return false;
   }
 
-  // Check if user has admin role via direct query (Better Auth admin plugin)
+  // Check if role is already in session (Better Auth admin plugin)
+  // This avoids a DB query in most cases
+  if (session.user.role) {
+    return session.user.role === "ADMIN";
+  }
+
+  // Fallback: query database if role not in session
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { role: true },

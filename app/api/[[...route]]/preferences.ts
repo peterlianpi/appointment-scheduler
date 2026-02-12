@@ -9,6 +9,8 @@ import { auth } from "@/lib/auth";
 // ============================================
 
 const updatePreferencesSchema = z.object({
+  defaultDuration: z.number().int().min(5).max(480).optional(), // 5 min to 8 hours
+  bufferTime: z.number().int().min(0).max(60).optional(), // 0 to 60 minutes
   reminderEnabled: z.boolean().optional(),
   reminderHoursBefore: z.number().int().min(1).max(168).optional(), // 1 hour to 7 days
   emailReminders: z.boolean().optional(),
@@ -59,6 +61,8 @@ const app = new Hono()
       return c.json({
         success: true,
         data: {
+          defaultDuration: preferences.defaultDuration,
+          bufferTime: preferences.bufferTime,
           reminderEnabled: preferences.reminderEnabled,
           reminderHoursBefore: preferences.reminderHoursBefore,
           emailReminders: preferences.emailReminders,
@@ -102,6 +106,10 @@ const app = new Hono()
 
       const updateData: Record<string, unknown> = {};
 
+      if (body.defaultDuration !== undefined)
+        updateData.defaultDuration = body.defaultDuration;
+      if (body.bufferTime !== undefined)
+        updateData.bufferTime = body.bufferTime;
       if (body.reminderEnabled !== undefined)
         updateData.reminderEnabled = body.reminderEnabled;
       if (body.reminderHoursBefore !== undefined)
@@ -130,6 +138,8 @@ const app = new Hono()
       return c.json({
         success: true,
         data: {
+          defaultDuration: updated.defaultDuration,
+          bufferTime: updated.bufferTime,
           reminderEnabled: updated.reminderEnabled,
           reminderHoursBefore: updated.reminderHoursBefore,
           emailReminders: updated.emailReminders,

@@ -1,16 +1,14 @@
 "use client";
 
 import * as React from "react";
-import {
-  Calendar,
-  LayoutDashboard,
-  Settings2,
-  BarChart3,
-} from "lucide-react";
+import { Calendar, LayoutDashboard, Settings2, BarChart3 } from "lucide-react";
 import { NavMain } from "@/features/nav/components/nav-main";
 import { NavUser } from "@/features/nav/components/nav-user";
 import { TeamSwitcher } from "@/features/nav/components/team-switcher";
-import { AdminSwitch } from "@/features/nav/components/admin-switch";
+import {
+  AdminSwitch,
+  useAdminStatus,
+} from "@/features/nav/components/admin-switch";
 import {
   Sidebar,
   SidebarContent,
@@ -19,7 +17,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useSession } from "@/lib/auth-client";
-import { checkAdminRole } from "@/lib/api/hono-client";
 
 // Regular user nav items
 const userNavMain = [
@@ -111,20 +108,7 @@ const teams = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session, isPending } = useSession();
-  const [isAdmin, setIsAdmin] = React.useState(false);
-
-  // Check if user is admin
-  React.useEffect(() => {
-    const checkAdmin = async () => {
-      if (session?.user) {
-        const adminStatus = await checkAdminRole();
-        setIsAdmin(adminStatus);
-      } else {
-        setIsAdmin(false);
-      }
-    };
-    checkAdmin();
-  }, [session?.user]);
+  const isAdmin = useAdminStatus();
 
   // Combine regular nav items with admin items if user is admin
   const navMain = React.useMemo(() => {
@@ -160,7 +144,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <TeamSwitcher teams={teams} />
         {/* Admin Toggle - Only show for admin users */}
-        {!isPending && isAdmin && <AdminSwitch />}
+        <AdminSwitch
+          isAdmin={!!isAdmin}
+          isLoading={isPending || isAdmin === null}
+        />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />

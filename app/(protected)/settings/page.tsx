@@ -40,15 +40,21 @@ import {
 import Link from "next/link";
 import { format } from "date-fns";
 import { useSession } from "@/lib/auth-client";
+import { updateProfileName, updateProfileEmail } from "@/action/profile";
 import { useSessions } from "@/features/auth/hooks/use-sessions";
 import {
   useUserPreferences,
   useUpdatePreferences,
   REMINDER_TIME_OPTIONS,
 } from "@/features/preferences/api/use-preferences";
+import { toast } from "sonner";
 
 export default function SettingsPage() {
-  const { data: session, isPending: isLoadingSession } = useSession();
+  const {
+    data: session,
+    isPending: isLoadingSession,
+    refetch: refetchSession,
+  } = useSession();
   const {
     sessions,
     isLoading: isLoadingSessions,
@@ -61,6 +67,7 @@ export default function SettingsPage() {
   const updatePreferences = useUpdatePreferences();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [localPrefs, setLocalPrefs] = useState({
     reminderEnabled: true,
     reminderHoursBefore: 24,
@@ -69,7 +76,19 @@ export default function SettingsPage() {
     appointmentCreatedNotif: true,
     appointmentRescheduledNotif: true,
     appointmentCancelledNotif: true,
+    defaultDuration: 30,
+    bufferTime: 5,
   });
+
+  // Profile form state
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+
+  // Appointment settings state
+  const [defaultDuration, setDefaultDuration] = useState(30);
+  const [bufferTime, setBufferTime] = useState(5);
+  const [isSavingAppointment, setIsSavingAppointment] = useState(false);
 
   // Sync local state with fetched preferences
   useEffect(() => {
@@ -81,6 +100,17 @@ export default function SettingsPage() {
     }
   }, [preferences]);
 
+  // Sync profile form with session
+  useEffect(() => {
+    if (session?.user) {
+      const userName = session.user.name || "";
+      const names = userName.split(" ");
+      setFirstName(names.slice(0, -1).join(" ") || "");
+      setLastName(names.slice(-1).join(" ") || "");
+      setEmail(session.user.email || "");
+    }
+  }, [session]);
+
   const handlePreferenceChange = (key: string, value: boolean | number) => {
     setLocalPrefs((prev) => ({ ...prev, [key]: value }));
   };
@@ -89,8 +119,58 @@ export default function SettingsPage() {
     setIsSaving(true);
     try {
       await updatePreferences.mutateAsync(localPrefs);
+      toast.success("Preferences saved successfully");
+    } catch {
+      toast.error("Failed to save preferences");
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveProfile = async () => {
+    setIsSavingProfile(true);
+    try {
+      const fullName = `${firstName} ${lastName}`.trim();
+
+      // Update name if changed
+      if (fullName !== session?.user?.name) {
+        const result = await updateProfileName(fullName);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to update name");
+        }
+      }
+
+      // Update email if changed
+      if (email !== session?.user?.email) {
+        const result = await updateProfileEmail(email);
+        if (!result.success) {
+          throw new Error(result.error || "Failed to update email");
+        }
+      }
+
+      toast.success("Profile updated successfully");
+      await refetchSession();
+    } catch (error) {
+      toast.error("Failed to update profile");
+      console.error(error);
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
+
+  const handleSaveAppointmentSettings = async () => {
+    setIsSavingAppointment(true);
+    try {
+      // Save to preferences API
+      await updatePreferences.mutateAsync({
+        defaultDuration,
+        bufferTime,
+      });
+      toast.success("Appointment settings saved successfully");
+    } catch {
+      toast.error("Failed to save appointment settings");
+    } finally {
+      setIsSavingAppointment(false);
     }
   };
 
@@ -113,13 +193,6 @@ export default function SettingsPage() {
     return format(d, "MMM d, yyyy 'at' h:mm a");
   };
 
-  // Extract user data from session
-  const user = session?.user;
-  const userName = user?.name || "";
-  const userEmail = user?.email || "";
-  const firstName = userName.split(" ").slice(0, -1).join(" ") || "";
-  const lastName = userName.split(" ").slice(-1).join(" ") || "";
-
   const getDeviceInfo = (userAgent?: string | null) => {
     if (!userAgent) return "Unknown Device";
 
@@ -131,6 +204,7 @@ export default function SettingsPage() {
 
     return "Unknown Device";
   };
+
   return (
     <div className="p-0">
       <div className="space-y-6">
@@ -161,7 +235,8 @@ export default function SettingsPage() {
                 <Input
                   id="firstName"
                   placeholder="John"
-                  defaultValue={firstName}
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
                   disabled={isLoadingSession}
                 />
               </div>
@@ -170,7 +245,8 @@ export default function SettingsPage() {
                 <Input
                   id="lastName"
                   placeholder="Doe"
-                  defaultValue={lastName}
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
                   disabled={isLoadingSession}
                 />
               </div>
@@ -181,15 +257,19 @@ export default function SettingsPage() {
                 id="email"
                 type="email"
                 placeholder="john@example.com"
-                defaultValue={userEmail}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 disabled={isLoadingSession}
               />
             </div>
-            <Button disabled={isLoadingSession}>
-              {isLoadingSession ? (
+            <Button
+              onClick={handleSaveProfile}
+              disabled={isLoadingSession || isSavingProfile}
+            >
+              {isSavingProfile ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Loading...
+                  Saving...
                 </>
               ) : (
                 "Save Changes"
@@ -307,10 +387,7 @@ export default function SettingsPage() {
             <div className="flex flex-col sm:flex-row gap-3">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className=" justify-start h-11"
-                  >
+                  <Button variant="outline" className=" justify-start h-11">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span className="truncate">Sign out of other devices</span>
                   </Button>
@@ -336,10 +413,7 @@ export default function SettingsPage() {
 
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button
-                    variant="destructive"
-                    className=" justify-start h-11"
-                  >
+                  <Button variant="destructive" className=" justify-start h-11">
                     <LogOut className="mr-2 h-4 w-4" />
                     <span className="truncate">Sign out of all devices</span>
                   </Button>
@@ -480,15 +554,39 @@ export default function SettingsPage() {
               <Label htmlFor="defaultDuration">
                 Default Duration (minutes)
               </Label>
-              <Input id="defaultDuration" type="number" defaultValue="30" />
+              <Input
+                id="defaultDuration"
+                type="number"
+                value={defaultDuration}
+                onChange={(e) =>
+                  setDefaultDuration(parseInt(e.target.value) || 30)
+                }
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="bufferTime">
                 Buffer Between Appointments (minutes)
               </Label>
-              <Input id="bufferTime" type="number" defaultValue="5" />
+              <Input
+                id="bufferTime"
+                type="number"
+                value={bufferTime}
+                onChange={(e) => setBufferTime(parseInt(e.target.value) || 5)}
+              />
             </div>
-            <Button>Save Appointment Settings</Button>
+            <Button
+              onClick={handleSaveAppointmentSettings}
+              disabled={isSavingAppointment}
+            >
+              {isSavingAppointment ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                "Save Appointment Settings"
+              )}
+            </Button>
           </CardContent>
         </Card>
 
@@ -499,53 +597,20 @@ export default function SettingsPage() {
             <div>
               <CardTitle>Email Preferences</CardTitle>
               <CardDescription>
-                Customize email content and frequency
+                Configure your email notification preferences
               </CardDescription>
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Confirmation Emails</Label>
+                <Label>Marketing Emails</Label>
                 <p className="text-sm text-muted-foreground">
-                  Receive email when appointment is confirmed
+                  Receive updates about new features
                 </p>
               </div>
               <Switch defaultChecked />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Cancellation Emails</Label>
-                <p className="text-sm text-muted-foreground">
-                  Receive email when appointment is cancelled
-                </p>
-              </div>
-              <Switch defaultChecked />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="space-y-0.5">
-                <Label>Weekly Summary</Label>
-                <p className="text-sm text-muted-foreground">
-                  Get a weekly summary of your appointments
-                </p>
-              </div>
-              <Switch />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Danger Zone */}
-        <Card className="border-destructive">
-          <CardHeader>
-            <CardTitle className="text-destructive">Danger Zone</CardTitle>
-            <CardDescription>
-              Irreversible actions for your account
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button variant="destructive" className="w-full sm:w-auto h-11">
-              Delete Account
-            </Button>
           </CardContent>
         </Card>
       </div>

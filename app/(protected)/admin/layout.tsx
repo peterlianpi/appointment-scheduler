@@ -1,33 +1,20 @@
-import { auth } from "@/lib/auth";
+import { checkIsAdmin } from "@/lib/auth/admin";
 import { redirect } from "next/navigation";
-import prisma from "@/lib/prisma";
-import { headers } from "next/headers";
+
+// Force dynamic rendering since we check authentication on each request
+export const dynamic = "force-dynamic";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Get the current session
-  const session = await auth.api.getSession({ headers: await headers() });
+  // Fast server-side admin check using Better Auth session
+  // No separate DB query needed - leverages cached session data
+  const isAdmin = await checkIsAdmin();
 
-  if (!session?.user) {
-    // Not authenticated, redirect to login
-    console.warn("[AdminLayout] Unauthorized access attempt - no session");
-    redirect("/login");
-  }
-
-  // Check if user has admin role
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: { role: true },
-  });
-
-  if (user?.role !== "ADMIN") {
-    // Not an admin, redirect to dashboard
-    console.warn(
-      `[AdminLayout] Non-admin user "${session.user.email}" attempted to access admin area`,
-    );
+  if (!isAdmin) {
+    console.warn("[AdminLayout] Unauthorized access attempt - not an admin");
     redirect("/dashboard");
   }
 
