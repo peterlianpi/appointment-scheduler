@@ -30,8 +30,8 @@ export interface CheckAdminResponse {
 // ============================================
 
 const adminExportQuerySchema = z.object({
-  startDate: z.iso.datetime().optional(),
-  endDate: z.iso.datetime().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
   status: z.enum(["SCHEDULED", "COMPLETED", "CANCELLED", "NO_SHOW"]).optional(),
   format: z.enum(["csv", "json"]).optional().default("csv"),
 });

@@ -1,7 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Calendar, LayoutDashboard, Settings2, Users, BarChart3 } from "lucide-react";
+import {
+  Calendar,
+  LayoutDashboard,
+  Settings2,
+  Users,
+  BarChart3,
+} from "lucide-react";
 import { NavMain } from "@/features/nav/components/nav-main";
 import { NavUser } from "@/features/nav/components/nav-user";
 import { TeamSwitcher } from "@/features/nav/components/team-switcher";
@@ -70,7 +76,7 @@ const userNavMain = [
 // Admin-specific nav items (added to regular items)
 const adminNavItems = [
   {
-    title: "All Appointments",
+    title: "Admin Panel",
     url: "/admin",
     icon: BarChart3,
     isActive: false,
@@ -85,18 +91,10 @@ const adminNavItems = [
       },
       {
         title: "Export Data",
-        url: "/admin/export",
+        url: "/admin/appointments?export=true",
       },
-    ],
-  },
-  {
-    title: "Users",
-    url: "/admin/users",
-    icon: Users,
-    isActive: false,
-    items: [
       {
-        title: "All Users",
+        title: "Users",
         url: "/admin/users",
       },
     ],
@@ -134,7 +132,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const items = [...userNavMain];
     if (isAdmin) {
       // Insert admin items before settings
-      const settingsIndex = items.findIndex((item) => item.title === "Settings");
+      const settingsIndex = items.findIndex(
+        (item) => item.title === "Settings",
+      );
       if (settingsIndex >= 0) {
         items.splice(settingsIndex, 0, ...adminNavItems);
       } else {

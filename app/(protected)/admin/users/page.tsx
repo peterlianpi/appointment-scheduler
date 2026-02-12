@@ -21,7 +21,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { client } from "@/lib/api/hono-client";
+import { getAdminUsers } from "@/lib/api/hono-client";
 
 interface User {
   id: string;
@@ -43,17 +43,12 @@ export default function AdminUsersPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-users", search, page],
     queryFn: async () => {
-      const response = await client.api.admin.users.$get({
-        query: {
-          search: search || undefined,
-          page: page.toString(),
-          limit: limit.toString(),
-        },
+      const result = await getAdminUsers({
+        search: search || undefined,
+        page,
+        limit,
       });
-      if (!response.ok) {
-        throw new Error("Failed to fetch users");
-      }
-      return response.json();
+      return result;
     },
   });
 
@@ -73,10 +68,10 @@ export default function AdminUsersPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Users Management</h2>
-          <p className="text-muted-foreground">
-            Manage all registered users
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">
+            Users Management
+          </h2>
+          <p className="text-muted-foreground">Manage all registered users</p>
         </div>
         <div className="flex items-center gap-2">
           <div className="relative w-full sm:w-64">
@@ -133,7 +128,9 @@ export default function AdminUsersPage() {
                               </span>
                             </div>
                             <div>
-                              <p className="font-medium">{user.name || "Unknown"}</p>
+                              <p className="font-medium">
+                                {user.name || "Unknown"}
+                              </p>
                               <p className="text-sm text-muted-foreground flex items-center gap-1">
                                 <Mail className="h-3 w-3" />
                                 {user.email}
@@ -143,7 +140,9 @@ export default function AdminUsersPage() {
                         </TableCell>
                         <TableCell>
                           <Badge
-                            variant={user.role === "ADMIN" ? "default" : "secondary"}
+                            variant={
+                              user.role === "ADMIN" ? "default" : "secondary"
+                            }
                             className="flex items-center gap-1 w-fit"
                           >
                             <Shield className="h-3 w-3" />
