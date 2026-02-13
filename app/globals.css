@@ -22,6 +22,12 @@
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+  --color-chart-current: var(--chart-current);
+  --color-chart-previous: var(--chart-previous);
+  --color-chart-peak: var(--chart-peak);
+  --color-chart-high: var(--chart-high);
+  --color-chart-medium: var(--chart-medium);
+  --color-chart-low: var(--chart-low);
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
@@ -65,11 +71,17 @@
   --border: oklch(0.92 0.004 286.32);
   --input: oklch(0.92 0.004 286.32);
   --ring: oklch(0.705 0.015 286.067);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-1: 221.2 83.2% 53.3%;
+  --chart-2: 142.1 76.2% 36.3%;
+  --chart-3: 0 84.2% 60.2%;
+  --chart-4: 45.4 93.4% 47.5%;
+  --chart-5: 262.1 83.3% 57.8%;
+  --chart-current: 221.2 83.2% 53.3%;
+  --chart-previous: 142.1 76.2% 36.3%;
+  --chart-peak: 0 84.2% 60.2%;
+  --chart-high: 24.6 95% 53.1%;
+  --chart-medium: 45.4 93.4% 47.5%;
+  --chart-low: 142.1 76.2% 36.3%;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.141 0.005 285.823);
   --sidebar-primary: oklch(0.21 0.006 285.885);
@@ -101,11 +113,17 @@
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
   --ring: oklch(0.552 0.016 285.938);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
+  --chart-1: 217.2 91.2% 59.8%;
+  --chart-2: 142.1 70.6% 45.3%;
+  --chart-3: 0 72.2% 50.6%;
+  --chart-4: 48 96.5% 53.1%;
+  --chart-5: 263.4 70% 61%;
+  --chart-current: 217.2 91.2% 59.8%;
+  --chart-previous: 142.1 70.6% 45.3%;
+  --chart-peak: 0 72.2% 50.6%;
+  --chart-high: 24.6 95% 53.1%;
+  --chart-medium: 45.4 93.4% 47.5%;
+  --chart-low: 142.1 76.2% 36.3%;
   --sidebar: oklch(0.21 0.006 285.885);
   --sidebar-foreground: oklch(0.985 0 0);
   --sidebar-primary: oklch(0.488 0.243 264.376);
@@ -120,7 +138,6 @@
   body {
     @apply bg-background text-foreground;
   }
-
 }
 
 @layer base {
@@ -131,3 +148,80 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Responsive Chart Utilities */
+@layer utilities {
+  /* Touch-friendly minimum sizes */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Chart container breakpoints */
+  .chart-container-xs {
+    @apply h-[200px] sm:h-[250px] md:h-[300px] lg:h-[350px];
+  }
+
+  .chart-container-sm {
+    @apply h-[180px] sm:h-[220px] md:h-[280px] lg:h-[320px];
+  }
+
+  /* Responsive typography for charts */
+  .chart-text-xs {
+    @apply text-[10px] sm:text-xs md:text-sm;
+  }
+
+  .chart-text-sm {
+    @apply text-xs sm:text-sm md:text-base;
+  }
+
+  /* Collapsible section animation */
+  .collapsible-content {
+    @apply overflow-hidden transition-all duration-300 ease-in-out;
+  }
+
+  .collapsible-content.collapsed {
+    @apply max-h-0 opacity-0;
+  }
+
+  .collapsible-content.expanded {
+    @apply max-h-[1000px] opacity-100;
+  }
+
+  /* Grid breakpoints for stats cards */
+  .stats-grid {
+    @apply grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4;
+  }
+
+  /* Chart grid breakpoints */
+  .charts-grid {
+    @apply grid gap-4 sm:gap-6;
+  }
+
+  .charts-grid-2-col {
+    @apply grid-cols-1 sm:grid-cols-1 lg:grid-cols-2;
+  }
+
+  /* Responsive spacing */
+  .section-spacing {
+    @apply space-y-3 sm:space-y-4 lg:space-y-6;
+  }
+
+  /* Focus visible for accessibility */
+  .focus-visible {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2;
+  }
+
+  /* Reduced motion */
+  @media (prefers-reduced-motion: reduce) {
+    .collapsible-content {
+      @apply transition-none;
+    }
+
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}
+

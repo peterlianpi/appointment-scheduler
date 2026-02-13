@@ -16,15 +16,31 @@ export const statusProgressConfig: Record<
   AppointmentStatus,
   { icon: typeof Circle; color: string; label: string }
 > = {
-  SCHEDULED: { icon: Circle, color: "text-blue-500", label: "Scheduled" },
-  IN_PROGRESS: { icon: Loader2, color: "text-amber-500", label: "In Progress" },
+  SCHEDULED: {
+    icon: Circle,
+    color: "text-blue-500 dark:text-blue-400",
+    label: "Scheduled",
+  },
+  IN_PROGRESS: {
+    icon: Loader2,
+    color: "text-amber-500 dark:text-amber-400",
+    label: "In Progress",
+  },
   COMPLETED: {
     icon: CheckCircle2,
-    color: "text-green-500",
+    color: "text-green-500 dark:text-green-400",
     label: "Completed",
   },
-  CANCELLED: { icon: CircleX, color: "text-red-500", label: "Cancelled" },
-  NO_SHOW: { icon: CircleX, color: "text-yellow-500", label: "No Show" },
+  CANCELLED: {
+    icon: CircleX,
+    color: "text-red-500 dark:text-red-400",
+    label: "Cancelled",
+  },
+  NO_SHOW: {
+    icon: CircleX,
+    color: "text-yellow-500 dark:text-yellow-400",
+    label: "No Show",
+  },
 };
 
 export const allStatuses: AppointmentStatus[] = [

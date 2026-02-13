@@ -5,18 +5,17 @@ import appointment from "./appointment";
 import notifications from "./notifications";
 import preferences from "./preferences";
 import admin from "./admin";
+import analytics from "./analytics";
 import landing from "./landing";
 import cleanup from "./cron/cleanup";
 import reminders from "./cron/reminders";
-import checkRole from './check-role'
+import checkRole from "./check-role";
 
 // ============================================
 // MAIN APP ROUTER
 // ============================================
 
-const app = new Hono().basePath("/api")
- 
-
+const app = new Hono().basePath("/api");
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const route = app
@@ -27,7 +26,8 @@ const route = app
   .route("/cron/cleanup", cleanup)
   .route("/cron/reminders", reminders)
   .route("/admin", admin)
-  .route('/check-role',checkRole);
+  .route("/analytics", analytics)
+  .route("/check-role", checkRole);
 
 export const GET = handle(app);
 export const POST = handle(app);
