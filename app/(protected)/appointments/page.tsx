@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AppointmentsContent } from "./appointments-content";
+import { AppointmentsContent } from "@/features/appointment";
 
 // Force dynamic rendering because useSearchParams requires runtime context
 export const dynamic = "force-dynamic";

@@ -5,7 +5,7 @@ import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AppointmentList } from "@/features/appointment/components/appointment-list";
+import { AppointmentList } from "./appointment-list";
 import {
   Appointment,
   AppointmentStatus,

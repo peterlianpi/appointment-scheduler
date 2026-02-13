@@ -418,6 +418,7 @@ const app = new Hono()
         search: z.string().optional(),
         page: z.string().optional(),
         limit: z.string().optional(),
+        status: z.enum(["all", "active", "banned"]).optional(),
       }),
     ),
     async (c) => {
@@ -436,7 +437,7 @@ const app = new Hono()
           );
         }
 
-        const { search, page = "1", limit = "10" } = c.req.valid("query");
+        const { search, page = "1", limit = "10", status = "all" } = c.req.valid("query");
         const pageNum = parseInt(page, 10);
         const limitNum = parseInt(limit, 10);
         const skip = (pageNum - 1) * limitNum;
@@ -445,6 +446,13 @@ const app = new Hono()
         const where: Record<string, unknown> = {
           deletedAt: null,
         };
+
+        // Filter by status (ban status)
+        if (status === "banned") {
+          where.banned = true;
+        } else if (status === "active") {
+          where.banned = false;
+        }
 
         if (search) {
           where.OR = [
@@ -466,6 +474,7 @@ const app = new Hono()
               role: true,
               emailVerified: true,
               createdAt: true,
+              banned: true,
               _count: {
                 select: {
                   appointments: true,
@@ -502,8 +511,316 @@ const app = new Hono()
         );
       }
     },
+  )
+  // ============================================
+  // GET /api/admin/users/:id - Get single user (Admin only)
+  // ============================================
+  .get(
+    "/users/:id",
+    zValidator(
+      "param",
+      z.object({
+        id: z.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const isAdminUser = await checkIsAdmin(c);
+        if (!isAdminUser) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "UNAUTHORIZED",
+                message: "Authentication required",
+              },
+            },
+            401
+          );
+        }
+
+        const { id } = c.req.valid("param");
+
+        const user = await prisma.user.findUnique({
+          where: { id },
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            emailVerified: true,
+            image: true,
+            createdAt: true,
+            updatedAt: true,
+            banned: true,
+            banReason: true,
+            banExpires: true,
+            deletedAt: true,
+            _count: {
+              select: {
+                appointments: true,
+              },
+            },
+          },
+        });
+
+        if (!user) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "NOT_FOUND",
+                message: "User not found",
+              },
+            },
+            404
+          );
+        }
+
+        return c.json({
+          success: true,
+          data: { user },
+        });
+      } catch (error) {
+        console.error("Admin user detail error:", error);
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: "Failed to fetch user",
+            },
+          },
+          500
+        );
+      }
+    },
+  )
+  // ============================================
+  // PATCH /api/admin/users/:id - Update user (Admin only)
+  // ============================================
+  .patch(
+    "/users/:id",
+    zValidator(
+      "param",
+      z.object({
+        id: z.string(),
+      })
+    ),
+    zValidator(
+      "json",
+      z.object({
+        name: z.string().optional(),
+        role: z.string().optional(),
+        banned: z.boolean().optional(),
+        banReason: z.string().optional(),
+        banExpires: z.string().optional(),
+      })
+    ),
+    async (c) => {
+      try {
+        const isAdminUser = await checkIsAdmin(c);
+        if (!isAdminUser) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "UNAUTHORIZED",
+                message: "Authentication required",
+              },
+            },
+            401
+          );
+        }
+
+        const { id } = c.req.valid("param");
+        const data = c.req.valid("json");
+
+        // Prevent removing admin role from yourself
+        const session = await auth.api.getSession({
+          headers: c.req.header("cookie")
+            ? { Cookie: c.req.header("cookie")! }
+            : {},
+        });
+        if (session?.user?.id === id && data.role && data.role !== "ADMIN") {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "FORBIDDEN",
+                message: "Cannot remove your own admin role",
+              },
+            },
+            403
+          );
+        }
+
+        // Check if user exists
+        const existingUser = await prisma.user.findUnique({
+          where: { id },
+          select: { id: true },
+        });
+
+        if (!existingUser) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "NOT_FOUND",
+                message: "User not found",
+              },
+            },
+            404
+          );
+        }
+
+        // Build update data
+        const updateData: Record<string, unknown> = {};
+        if (data.name !== undefined) updateData.name = data.name;
+        if (data.role !== undefined) updateData.role = data.role;
+        if (data.banned !== undefined) updateData.banned = data.banned;
+        if (data.banReason !== undefined) updateData.banReason = data.banReason;
+        if (data.banExpires !== undefined) {
+          updateData.banExpires = data.banExpires ? new Date(data.banExpires) : null;
+        }
+
+        const user = await prisma.user.update({
+          where: { id },
+          data: updateData,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            emailVerified: true,
+            image: true,
+            createdAt: true,
+            updatedAt: true,
+            banned: true,
+            banReason: true,
+            banExpires: true,
+            deletedAt: true,
+            _count: {
+              select: {
+                appointments: true,
+              },
+            },
+          },
+        });
+
+        return c.json({
+          success: true,
+          data: { user },
+        });
+      } catch (error) {
+        console.error("Admin user update error:", error);
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: "Failed to update user",
+            },
+          },
+          500
+        );
+      }
+    },
+  )
+  // ============================================
+  // DELETE /api/admin/users/:id - Delete user (Admin only)
+  // ============================================
+  .delete(
+    "/users/:id",
+    zValidator(
+      "param",
+      z.object({
+        id: z.string(),
+      })
+    ),
+    async (c) => {
+      try {
+        const isAdminUser = await checkIsAdmin(c);
+        if (!isAdminUser) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "UNAUTHORIZED",
+                message: "Authentication required",
+              },
+            },
+            401
+          );
+        }
+
+        const { id } = c.req.valid("param");
+
+        // Prevent deleting yourself
+        const session = await auth.api.getSession({
+          headers: c.req.header("cookie")
+            ? { Cookie: c.req.header("cookie")! }
+            : {},
+        });
+        if (session?.user?.id === id) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "FORBIDDEN",
+                message: "Cannot delete your own account",
+              },
+            },
+            403
+          );
+        }
+
+        // Check if user exists
+        const existingUser = await prisma.user.findUnique({
+          where: { id },
+          select: { id: true },
+        });
+
+        if (!existingUser) {
+          return c.json(
+            {
+              success: false,
+              error: {
+                code: "NOT_FOUND",
+                message: "User not found",
+              },
+            },
+            404
+          );
+        }
+
+        // Soft delete user
+        await prisma.user.update({
+          where: { id },
+          data: { deletedAt: new Date() },
+        });
+
+        return c.json({
+          success: true,
+          data: { message: "User deleted successfully" },
+        });
+      } catch (error) {
+        console.error("Admin user delete error:", error);
+        return c.json(
+          {
+            success: false,
+            error: {
+              code: "INTERNAL_ERROR",
+              message: "Failed to delete user",
+            },
+          },
+          500
+        );
+      }
+    },
   );
 
 export default app;
 
 export type AppType = typeof app;
+

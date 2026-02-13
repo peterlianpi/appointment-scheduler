@@ -146,6 +146,110 @@ export async function getAdminUsers(
 }
 
 // ============================================
+// Admin Single User Types
+// ============================================
+
+export interface SingleAdminUser extends AdminUser {
+  image?: string | null;
+  updatedAt?: string;
+  banned?: boolean | null;
+  banReason?: string | null;
+  banExpires?: string | null;
+  deletedAt?: string | null;
+}
+
+export interface SingleUserResponse {
+  success: boolean;
+  data: {
+    user: SingleAdminUser;
+  };
+}
+
+export interface UpdateUserParams {
+  name?: string;
+  role?: string;
+  banned?: boolean;
+  banReason?: string;
+  banExpires?: string;
+}
+
+export interface UpdateUserResponse {
+  success: boolean;
+  data: {
+    user: SingleAdminUser;
+  };
+}
+
+export interface DeleteUserResponse {
+  success: boolean;
+  data: {
+    message: string;
+  };
+}
+
+// ============================================
+// Admin Single User Helper
+// ============================================
+
+export async function getAdminUser(
+  userId: string,
+): Promise<SingleUserResponse> {
+  const response = await client.api.admin.users[":id"].$get({
+    param: { id: userId },
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch user");
+  }
+
+  return (await response.json()) as SingleUserResponse;
+}
+
+// ============================================
+// Admin Update User Helper
+// ============================================
+
+export async function updateAdminUser(
+  userId: string,
+  data: UpdateUserParams,
+): Promise<UpdateUserResponse> {
+  const response = await client.api.admin.users[":id"].$patch({
+    param: { id: userId },
+    json: data,
+  });
+
+  if (!response.ok) {
+    const error = (await response.json()) as {
+      error?: { message?: string; code?: string };
+    };
+    throw new Error(error?.error?.message || "Failed to update user");
+  }
+
+  return (await response.json()) as UpdateUserResponse;
+}
+
+// ============================================
+// Admin Delete User Helper
+// ============================================
+
+export async function deleteAdminUser(
+  userId: string,
+): Promise<DeleteUserResponse> {
+  const response = await client.api.admin.users[":id"].$delete({
+    param: { id: userId },
+  });
+
+  if (!response.ok) {
+    const error = (await response.json()) as {
+      error?: { message?: string; code?: string };
+    };
+    throw new Error(error?.error?.message || "Failed to delete user");
+  }
+
+  return (await response.json()) as DeleteUserResponse;
+}
+
+// ============================================
 // Admin Stats Types
 // ============================================
 
