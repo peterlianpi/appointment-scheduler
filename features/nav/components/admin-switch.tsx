@@ -3,9 +3,9 @@
 import { Shield, ShieldAlert } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useSession } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
+import { checkIsAdmin } from "@/lib/auth/admin";
 import {
   Tooltip,
   TooltipContent,
@@ -13,23 +13,73 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useSidebar } from "@/components/ui/sidebar";
-import { checkAdminRole } from "@/lib/api/hono-client";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface AdminSwitchProps {
-  /** Admin status from parent - if not provided, component won't render */
+  /** Admin status from parent - if not provided, component will check itself */
   isAdmin?: boolean;
-  /** Optional: show loading state */
-  isLoading?: boolean;
 }
 
-export function AdminSwitch({ isAdmin, isLoading }: AdminSwitchProps) {
+export function AdminSwitch({ isAdmin: propIsAdmin }: AdminSwitchProps) {
   const pathname = usePathname();
   const { state: sidebarState } = useSidebar();
   const isCollapsed = sidebarState === "collapsed";
   const isAdminPage = pathname.startsWith("/admin");
 
-  // Don't render if not admin or still loading
-  if (isLoading || !isAdmin) {
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [hasChecked, setHasChecked] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+
+  // If prop is provided, use it directly without loading state
+  const effectiveIsAdmin = propIsAdmin !== undefined ? propIsAdmin : isAdmin;
+  const effectiveHasChecked = propIsAdmin !== undefined ? true : hasChecked;
+
+  // Check admin status on mount if no prop provided
+  useEffect(() => {
+    // Skip if we have a prop or already checked
+    if (propIsAdmin !== undefined || hasChecked) return;
+
+    let mounted = true;
+
+    // Call server action directly (no need for useTransition)
+    checkIsAdmin()
+      .then((result) => {
+        if (mounted) {
+          setIsAdmin(result);
+          setHasChecked(true);
+        }
+      })
+      .catch((err) => {
+        if (mounted) {
+          console.error("[AdminSwitch] Error checking admin status:", err);
+          setError(err);
+          setHasChecked(true);
+        }
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [propIsAdmin, hasChecked]);
+
+  // Show skeleton while checking
+  if (!effectiveHasChecked) {
+    return (
+      <div
+        className={cn(
+          "flex items-center px-2",
+          isCollapsed ? "py-1" : "py-1.5",
+        )}
+      >
+        <Skeleton
+          className={cn("h-8 rounded-md", isCollapsed ? "w-8" : "w-24")}
+        />
+      </div>
+    );
+  }
+
+  // Don't render if not admin
+  if (!effectiveIsAdmin) {
     return null;
   }
 
@@ -72,34 +122,4 @@ export function AdminSwitch({ isAdmin, isLoading }: AdminSwitchProps) {
       </div>
     </TooltipProvider>
   );
-}
-
-/**
- * Hook to check admin status - used by parent components
- * Checks directly from API without caching
- */
-export function useAdminStatus(): boolean | null {
-  const { data: session } = useSession();
-  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
-
-  useEffect(() => {
-    const checkAdmin = async () => {
-      if (!session?.user) {
-        setIsAdmin(false);
-        return;
-      }
-
-      // Fetch from API
-      try {
-        const adminStatus = await checkAdminRole();
-        setIsAdmin(adminStatus);
-      } catch {
-        setIsAdmin(false);
-      }
-    };
-
-    checkAdmin();
-  }, [session?.user]);
-
-  return isAdmin;
 }

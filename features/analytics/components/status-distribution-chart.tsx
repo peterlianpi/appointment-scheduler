@@ -7,8 +7,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChartLegendContent } from "@/components/ui/chart";
 import type { StatusDistributionItem } from "@/features/analytics/types";
 
+// Chart data item that accepts string status for API responses
+interface ChartDataItem {
+  status: string;
+  count: number;
+  percentage: number;
+}
+
 interface StatusDistributionChartProps {
-  data?: StatusDistributionItem[];
+  data?: StatusDistributionItem[] | ChartDataItem[];
   isLoading?: boolean;
   error?: boolean;
   onRetry?: () => void;

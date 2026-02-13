@@ -22,6 +22,9 @@ interface TimeSlotsChartProps {
   onRetry?: () => void;
 }
 
+// API response type alias
+type ApiTimeSlotData = TimeSlotData;
+
 // Theme-aware hour colors using CSS variables
 const HOUR_COLORS = {
   peak: "hsl(var(--chart-peak))",

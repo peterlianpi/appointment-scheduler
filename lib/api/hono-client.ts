@@ -3,85 +3,6 @@ import type { AppType } from "@/app/api/[[...route]]/route";
 
 export const client = hc<AppType>("");
 
-/**
- * Check if the current user has admin role using Hono RPC
- */
-export async function checkAdminRole(): Promise<boolean> {
-  try {
-    const response = await client.api["check-role"].$get();
-
-    if (!response.ok) {
-      return false;
-    }
-
-    const data = (await response.json()) as {
-      success: boolean;
-      isAdmin: boolean;
-    };
-    return data.success && data.isAdmin === true;
-  } catch (error) {
-    console.error("[checkAdminRole] Error:", error);
-    return false;
-  }
-}
-
-// ============================================
-// Appointment Export Types
-// ============================================
-
-export interface ExportAppointmentsParams {
-  startDate?: string;
-  endDate?: string;
-  status?: "SCHEDULED" | "COMPLETED" | "CANCELLED" | "NO_SHOW";
-  format?: "csv" | "json";
-}
-
-/**
- * Response type for appointment export - returns a blob
- */
-export type ExportAppointmentsResponse = Blob;
-
-// ============================================
-// Appointment Export Helper
-// ============================================
-
-export async function exportAppointments(
-  params?: ExportAppointmentsParams,
-): Promise<void> {
-  // Build query object for the export endpoint
-  const query: Record<string, string> = {};
-  if (params?.startDate) query.startDate = params.startDate;
-  if (params?.endDate) query.endDate = params.endDate;
-  if (params?.status) query.status = params.status;
-  if (params?.format) query.format = params.format;
-
-  const response = await client.api.appointment.export.$get({ query });
-
-  if (!response.ok) {
-    const error = (await response.json()) as { error?: { message?: string } };
-    throw new Error(error?.error?.message || "Failed to export appointments");
-  }
-
-  const blob = await response.blob();
-
-  // Create download link and trigger download
-  const contentDisposition = response.headers.get("Content-Disposition");
-  const filenameMatch = contentDisposition?.match(/filename="(.+)"/);
-  const extension = params?.format === "json" ? "json" : "csv";
-  const filename =
-    filenameMatch?.[1] ||
-    `appointments-export-${new Date().toISOString().split("T")[0]}.${extension}`;
-
-  const downloadUrl = window.URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = downloadUrl;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  window.URL.revokeObjectURL(downloadUrl);
-}
-
 // ============================================
 // Admin Export Types
 // ============================================
@@ -207,7 +128,9 @@ export interface AdminUsersResponse {
 // Admin Users Helper
 // ============================================
 
-export async function getAdminUsers(params: AdminUsersParams = {}): Promise<AdminUsersResponse> {
+export async function getAdminUsers(
+  params: AdminUsersParams = {},
+): Promise<AdminUsersResponse> {
   const query: Record<string, string> = {};
   if (params.search) query.search = params.search;
   if (params.page) query.page = params.page.toString();
@@ -293,4 +216,75 @@ export interface LandingPageData {
 export interface LandingPageResponse {
   success: boolean;
   data: LandingPageData;
+}
+
+// ============================================
+// Analytics Types
+// ============================================
+
+export interface AnalyticsOverviewResponse {
+  success: boolean;
+  data: {
+    totalAppointments: number;
+    totalAppointmentsCurrentPeriod: number;
+    totalAppointmentsPreviousPeriod: number;
+    growthRate: number;
+    averageAppointmentsPerDay: number;
+    completionRate: number;
+    cancellationRate: number;
+    noShowRate: number;
+  };
+  timestamp: string;
+}
+
+export interface AnalyticsTimeseriesResponse {
+  success: boolean;
+  data: Array<{
+    date: string;
+    fullDate: string;
+    isoDate: string;
+    count: number;
+    previousPeriodCount: number;
+  }>;
+  timestamp: string;
+}
+
+export interface AnalyticsStatusDistributionResponse {
+  success: boolean;
+  data: Array<{
+    status: string;
+    count: number;
+    percentage: number;
+  }>;
+  timestamp: string;
+}
+
+export interface AnalyticsTimeSlotsResponse {
+  success: boolean;
+  data: Array<{
+    hour: number;
+    count: number;
+  }>;
+  timestamp: string;
+}
+
+export interface AnalyticsHeatmapResponse {
+  success: boolean;
+  data: Array<{
+    day: number;
+    hour: number;
+    count: number;
+  }>;
+  timestamp: string;
+}
+
+export interface AnalyticsTrendsResponse {
+  success: boolean;
+  data: Array<{
+    period: string;
+    current: number;
+    previous: number;
+    growth: number;
+  }>;
+  timestamp: string;
 }

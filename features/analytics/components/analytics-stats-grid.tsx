@@ -12,8 +12,20 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OverviewMetrics } from "@/features/analytics/types";
 
+// Extended type with API response wrapper
+interface StatsResponseData {
+  totalAppointments: number;
+  totalAppointmentsCurrentPeriod: number;
+  totalAppointmentsPreviousPeriod: number;
+  growthRate: number;
+  averageAppointmentsPerDay: number;
+  completionRate: number;
+  cancellationRate: number;
+  noShowRate: number;
+}
+
 interface AnalyticsStatsGridProps {
-  data?: OverviewMetrics;
+  data?: OverviewMetrics | StatsResponseData;
   isLoading?: boolean;
   error?: boolean;
   onRetry?: () => void;

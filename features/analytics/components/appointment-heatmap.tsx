@@ -18,6 +18,9 @@ interface AppointmentHeatmapProps {
   onRetry?: () => void;
 }
 
+// API response type alias
+type ApiHeatmapDataPoint = HeatmapDataPoint;
+
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 

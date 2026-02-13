@@ -22,6 +22,9 @@ interface TrendComparisonChartProps {
   onRetry?: () => void;
 }
 
+// API response type alias
+type ApiTrendDataPoint = TrendDataPoint;
+
 const chartConfig = {
   current: {
     label: "Current Period",

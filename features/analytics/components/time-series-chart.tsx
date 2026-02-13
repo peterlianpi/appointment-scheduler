@@ -23,6 +23,9 @@ interface TimeSeriesChartProps {
   period?: "day" | "week" | "month";
 }
 
+// API response type alias
+type ApiTimeseriesDataPoint = TimeseriesDataPoint;
+
 const chartConfig = {
   current: {
     label: "Current Period",

@@ -19,10 +19,8 @@ import {
 import { AppSidebar } from "@/features/nav/components/app-sidebar";
 import { ModeToggle } from "@/features/nav/components/theme-toggle";
 import { NotificationBell } from "@/features/notifications/components/notification-bell";
-import {
-  AdminSwitch,
-  useAdminStatus,
-} from "@/features/nav/components/admin-switch";
+import { AdminSwitch } from "@/features/nav/components/admin-switch";
+import { useAdminStatus } from "@/features/admin/api/use-admin-status";
 
 const BREADCRUMB_LABELS: Record<string, string> = {
   dashboard: "Dashboard",
@@ -35,7 +33,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
 };
 
 function HeaderActions() {
-  const isAdmin = useAdminStatus();
+  const { isAdmin } = useAdminStatus();
 
   return (
     <div className="flex items-center gap-2">

@@ -5,10 +5,8 @@ import { Calendar, LayoutDashboard, Settings2, BarChart3 } from "lucide-react";
 import { NavMain } from "@/features/nav/components/nav-main";
 import { NavUser } from "@/features/nav/components/nav-user";
 import { TeamSwitcher } from "@/features/nav/components/team-switcher";
-import {
-  AdminSwitch,
-  useAdminStatus,
-} from "@/features/nav/components/admin-switch";
+import { AdminSwitch } from "@/features/nav/components/admin-switch";
+import { useAdminStatus } from "@/features/admin/api/use-admin-status";
 import {
   Sidebar,
   SidebarContent,
@@ -108,7 +106,7 @@ const teams = [
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { data: session, isPending } = useSession();
-  const isAdmin = useAdminStatus();
+  const { isAdmin } = useAdminStatus();
 
   // Combine regular nav items with admin items if user is admin
   const navMain = React.useMemo(() => {
@@ -144,10 +142,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       <SidebarHeader>
         <TeamSwitcher teams={teams} />
         {/* Admin Toggle - Only show for admin users */}
-        <AdminSwitch
-          isAdmin={!!isAdmin}
-          isLoading={isPending || isAdmin === null}
-        />
+        <AdminSwitch isAdmin={!!isAdmin} />
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
