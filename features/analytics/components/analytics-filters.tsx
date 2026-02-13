@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Calendar, RefreshCw, Filter } from "lucide-react";
+import { Calendar, RefreshCw, Filter, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -16,6 +16,8 @@ import {
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { cn } from "@/lib/utils";
 
 interface AnalyticsFiltersProps {
   onFilterChange: (filters: FilterState) => void;
@@ -25,8 +27,10 @@ interface AnalyticsFiltersProps {
 
 export interface FilterState {
   period: "day" | "week" | "month";
-  range: 30 | 90 | 365;
+  range: 7 | 30 | 90 | 365;
   trendPeriod: "week" | "month";
+  customStartDate?: string;
+  customEndDate?: string;
 }
 
 const PERIODS = [
@@ -36,6 +40,7 @@ const PERIODS = [
 ] as const;
 
 const RANGES = [
+  { value: 7, label: "Last 7 days" },
   { value: 30, label: "Last 30 days" },
   { value: 90, label: "Last 90 days" },
   { value: 365, label: "Last year" },
@@ -58,10 +63,34 @@ export function AnalyticsFilters({
   });
 
   const [isExpanded, setIsExpanded] = React.useState(true);
+  const [dateMode, setDateMode] = React.useState<"quick" | "custom">("quick");
 
   const handleFilterChange = (
     key: keyof FilterState,
-    value: string | number,
+    value: string | number | undefined,
+  ) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    onFilterChange(newFilters);
+  };
+
+  const handleDateModeChange = (mode: "quick" | "custom") => {
+    setDateMode(mode);
+    if (mode === "quick") {
+      // Clear custom dates when switching to quick select
+      const newFilters = {
+        ...filters,
+        customStartDate: undefined,
+        customEndDate: undefined,
+      };
+      setFilters(newFilters);
+      onFilterChange(newFilters);
+    }
+  };
+
+  const handleCustomDateChange = (
+    key: "customStartDate" | "customEndDate",
+    value: string,
   ) => {
     const newFilters = { ...filters, [key]: value };
     setFilters(newFilters);
@@ -86,6 +115,28 @@ export function AnalyticsFilters({
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="pt-3 space-y-3">
+          {/* Date Mode Toggle */}
+          <div className="flex items-center gap-2 pb-2 border-b">
+            <Button
+              variant={dateMode === "quick" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => handleDateModeChange("quick")}
+              className="gap-1"
+            >
+              <CalendarDays className="h-4 w-4" />
+              Quick Select
+            </Button>
+            <Button
+              variant={dateMode === "custom" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => handleDateModeChange("custom")}
+              className="gap-1"
+            >
+              <Calendar className="h-4 w-4" />
+              Custom Range
+            </Button>
+          </div>
+
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* Period Select */}
@@ -112,28 +163,53 @@ export function AnalyticsFilters({
                 </Select>
               </div>
 
-              {/* Range Select */}
-              <Select
-                value={filters.range.toString()}
-                onValueChange={(value) =>
-                  handleFilterChange("range", parseInt(value))
-                }
-              >
-                <SelectTrigger className="w-[130px] sm:w-[140px] touch-target min-h-[44px]">
-                  <SelectValue placeholder="Date range" />
-                </SelectTrigger>
-                <SelectContent>
-                  {RANGES.map((range) => (
-                    <SelectItem
-                      key={range.value}
-                      value={range.value.toString()}
-                      className="touch-target min-h-[44px]"
-                    >
-                      {range.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              {dateMode === "quick" ? (
+                /* Quick Select Range */
+                <Select
+                  value={filters.range.toString()}
+                  onValueChange={(value) =>
+                    handleFilterChange("range", parseInt(value))
+                  }
+                >
+                  <SelectTrigger className="w-[130px] sm:w-[140px] touch-target min-h-[44px]">
+                    <SelectValue placeholder="Date range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {RANGES.map((range) => (
+                      <SelectItem
+                        key={range.value}
+                        value={range.value.toString()}
+                        className="touch-target min-h-[44px]"
+                      >
+                        {range.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              ) : (
+                /* Custom Date Range */
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="date"
+                    value={filters.customStartDate ?? ""}
+                    onChange={(e) =>
+                      handleCustomDateChange("customStartDate", e.target.value)
+                    }
+                    className="w-[140px] touch-target"
+                    placeholder="Start date"
+                  />
+                  <span className="text-muted-foreground">to</span>
+                  <Input
+                    type="date"
+                    value={filters.customEndDate ?? ""}
+                    onChange={(e) =>
+                      handleCustomDateChange("customEndDate", e.target.value)
+                    }
+                    className="w-[140px] touch-target"
+                    placeholder="End date"
+                  />
+                </div>
+              )}
 
               {/* Trend Period Select */}
               <Select

@@ -24,14 +24,25 @@ import type {
 const analyticsKeys = {
   all: ["analytics"] as const,
   overview: () => [...analyticsKeys.all, "overview"] as const,
-  timeseries: (params: TimeseriesQueryParams) =>
-    [...analyticsKeys.all, "timeseries", params] as const,
+  timeseries: (
+    period: string,
+    range: number,
+    startDate?: string,
+    endDate?: string,
+  ) =>
+    [
+      ...analyticsKeys.all,
+      "timeseries",
+      period,
+      range,
+      startDate,
+      endDate,
+    ] as const,
   statusDistribution: () =>
     [...analyticsKeys.all, "status-distribution"] as const,
   timeSlots: () => [...analyticsKeys.all, "time-slots"] as const,
   heatmap: () => [...analyticsKeys.all, "heatmap"] as const,
-  trends: (params: TrendsQueryParams) =>
-    [...analyticsKeys.all, "trends", params] as const,
+  trends: (period: string) => [...analyticsKeys.all, "trends", period] as const,
 };
 
 // Re-export query keys for convenience
@@ -78,17 +89,22 @@ export function useAnalyticsOverview() {
 }
 
 export function useAnalyticsTimeseries(params: TimeseriesQueryParams) {
-  // DEBUG: Log query params to verify they're correct
-  console.log("[useAnalyticsTimeseries DEBUG] params=", params);
-
   return useQuery({
-    queryKey: analyticsKeys.timeseries(params),
+    queryKey: analyticsKeys.timeseries(
+      params.period,
+      params.range,
+      params.customStartDate,
+      params.customEndDate,
+    ),
+    staleTime: 0, // Force refetch on period change
     queryFn: async () => {
       const response = await fetchApi<TimeseriesResponse>(
         "/analytics/timeseries",
         {
           period: params.period,
           range: params.range.toString(),
+          startDate: params.customStartDate ?? "",
+          endDate: params.customEndDate ?? "",
         },
       );
       return response.data;
@@ -132,7 +148,7 @@ export function useAnalyticsHeatmap() {
 
 export function useAnalyticsTrends(params: TrendsQueryParams) {
   return useQuery({
-    queryKey: analyticsKeys.trends(params),
+    queryKey: analyticsKeys.trends(params.period),
     queryFn: async () => {
       const response = await fetchApi<TrendsResponse>("/analytics/trends", {
         period: params.period,

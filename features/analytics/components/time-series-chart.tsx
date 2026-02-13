@@ -20,6 +20,7 @@ interface TimeSeriesChartProps {
   isLoading?: boolean;
   error?: boolean;
   onRetry?: () => void;
+  period?: "day" | "week" | "month";
 }
 
 const chartConfig = {
@@ -32,32 +33,6 @@ const chartConfig = {
     color: "hsl(var(--chart-previous))",
   },
 };
-
-function formatDate(
-  dateStr: string,
-  period: string,
-  isMobile: boolean = false,
-): string {
-  const date = new Date(dateStr);
-  switch (period) {
-    case "day":
-      return isMobile
-        ? date.toLocaleTimeString("en-US", { hour: "numeric" })
-        : date.toLocaleTimeString("en-US", { hour: "2-digit" });
-    case "week":
-      return isMobile
-        ? date.toLocaleDateString("en-US", { weekday: "short" })
-        : date.toLocaleDateString("en-US", { weekday: "long" });
-    case "month":
-      return isMobile
-        ? date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-        : date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    default:
-      return isMobile
-        ? date.toLocaleDateString("en-US", { month: "short", day: "numeric" })
-        : date.toLocaleDateString();
-  }
-}
 
 // Hook to detect screen size
 function useIsMobile() {
@@ -78,8 +53,8 @@ export function TimeSeriesChart({
   isLoading,
   error,
   onRetry,
+  period = "week",
 }: TimeSeriesChartProps) {
-  const [period, setPeriod] = React.useState<"day" | "week" | "month">("week");
   const isMobile = useIsMobile();
 
   if (isLoading) {
@@ -147,11 +122,11 @@ export function TimeSeriesChart({
           {(["day", "week", "month"] as const).map((p) => (
             <button
               key={p}
-              onClick={() => setPeriod(p)}
+              disabled
               className={`px-3 py-1.5 text-xs capitalize touch-target min-h-[36px] ${
                 period === p
                   ? "bg-primary text-primary-foreground rounded"
-                  : "text-muted-foreground hover:text-foreground"
+                  : "text-muted-foreground"
               }`}
             >
               {p}
@@ -174,12 +149,11 @@ export function TimeSeriesChart({
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
                 dataKey="date"
-                tickFormatter={(value) => formatDate(value, period, isMobile)}
                 tick={{ fontSize: isMobile ? 10 : 12 }}
                 stroke="currentColor"
                 className="text-muted-foreground"
                 tickCount={undefined}
-                interval="preserveStartEnd"
+                interval={0}
               />
               <YAxis
                 tick={{ fontSize: isMobile ? 10 : 12 }}
@@ -189,7 +163,7 @@ export function TimeSeriesChart({
               />
               <ChartTooltipContent
                 formatter={(value) => [value, ""]}
-                labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                labelFormatter={(label) => label.fullDate}
               />
               <Legend
                 stroke="currentColor"

@@ -84,6 +84,8 @@ export default function AdminPage() {
   const timeseriesQuery = useAnalyticsTimeseries({
     period: filters.period,
     range: filters.range,
+    customStartDate: filters.customStartDate,
+    customEndDate: filters.customEndDate,
   });
   const statusDistributionQuery = useAnalyticsStatusDistribution();
   const timeSlotsQuery = useAnalyticsTimeSlots();
@@ -209,6 +211,7 @@ export default function AdminPage() {
                     isLoading={timeseriesQuery.isLoading}
                     error={timeseriesQuery.isError}
                     onRetry={timeseriesQuery.refetch}
+                    period={filters.period}
                   />
                 </CollapsibleContent>
               </Collapsible>

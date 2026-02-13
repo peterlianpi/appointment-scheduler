@@ -35,7 +35,9 @@ export interface OverviewResponse {
 // ============================================
 
 export interface TimeseriesDataPoint {
-  date: string;
+  date: string; // "Jan 11" - for X-axis
+  fullDate: string; // "January 11, 2026" - for tooltip
+  isoDate: string; // "2026-01-11" - raw value for comparisons
   count: number;
   previousPeriodCount: number;
 }
@@ -126,7 +128,9 @@ export interface ErrorResponse {
 
 export interface TimeseriesQueryParams {
   period: "day" | "week" | "month";
-  range: 30 | 90 | 365;
+  range: 7 | 30 | 90 | 365;
+  customStartDate?: string;
+  customEndDate?: string;
 }
 
 export interface TrendsQueryParams {

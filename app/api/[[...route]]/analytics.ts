@@ -19,6 +19,8 @@ import type {
 const timeseriesQuerySchema = z.object({
   period: z.enum(["day", "week", "month"]).default("day"),
   range: z.coerce.number().int().min(1).max(365).default(30),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
 });
 
 const trendsQuerySchema = z.object({
@@ -67,6 +69,76 @@ function errorResponse(c: Context, error: string, code: number) {
     },
     code as 401 | 403 | 404 | 500,
   );
+}
+
+// Get ISO week number helper
+const getISOWeek = (date: Date): number => {
+  const d = new Date(
+    Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()),
+  );
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+};
+
+// ============================================
+// DATE FORMATTING HELPERS (moved from frontend)
+// ============================================
+
+interface FormattedDate {
+  date: string; // "Jan 11" - for X-axis
+  fullDate: string; // "January 11, 2026" - for tooltip
+  isoDate: string; // "2026-01-11" - raw value for comparisons
+}
+
+function formatDateForPeriod(period: string, date: Date): FormattedDate {
+  const monthShort = date.toLocaleDateString("en-US", { month: "short" });
+  const monthLong = date.toLocaleDateString("en-US", { month: "long" });
+  const day = date.getDate();
+  const year = date.getFullYear();
+  const isoDateStr = date.toISOString().split("T")[0] ?? "";
+
+  switch (period) {
+    case "day": {
+      return {
+        date: `${monthShort} ${day}`,
+        fullDate: `${monthLong} ${day}, ${year}`,
+        isoDate: isoDateStr,
+      };
+    }
+    case "week": {
+      const weekStart = new Date(date);
+      const weekEnd = new Date(date);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+      const endDay = weekEnd.getDate();
+      const endMonthShort = weekEnd.toLocaleDateString("en-US", {
+        month: "short",
+      });
+      const endMonthLong = weekEnd.toLocaleDateString("en-US", {
+        month: "long",
+      });
+      return {
+        date: `${monthShort} ${day}-${endDay}`,
+        fullDate: `${monthLong} ${day}-${endMonthLong} ${year}`,
+        isoDate: `${date.getFullYear()}-W${getISOWeek(date).toString().padStart(2, "0")}`,
+      };
+    }
+    case "month": {
+      return {
+        date: `${monthShort} ${year}`,
+        fullDate: `${monthLong} ${year}`,
+        isoDate: `${year}-${(date.getMonth() + 1).toString().padStart(2, "0")}`,
+      };
+    }
+    default: {
+      return {
+        date: `${monthShort} ${day}`,
+        fullDate: `${monthLong} ${day}, ${year}`,
+        isoDate: isoDateStr,
+      };
+    }
+  }
 }
 
 // ============================================
@@ -171,21 +243,38 @@ const app = new Hono()
         return errorResponse(c, "Authentication required", 401);
       }
 
-      const { period, range } = c.req.valid("query");
+      const { period, range, startDate, endDate } = c.req.valid("query");
 
-      // DEBUG: Log period to confirm it's being received
-      console.log("[TIMESERIES DEBUG] period=", period, "range=", range);
+      // Determine date range
+      let currentPeriodStart: Date;
+      let currentPeriodEnd: Date;
+      let daysBack: number;
 
-      // Calculate date granularity based on period
-      const daysBack = range;
-
-      // Get current period data
-      const currentPeriodStart = new Date();
-      currentPeriodStart.setDate(currentPeriodStart.getDate() - daysBack);
+      if (startDate && endDate) {
+        // Use custom date range
+        currentPeriodStart = new Date(startDate);
+        currentPeriodEnd = new Date(endDate);
+        // Set end date to end of day
+        currentPeriodEnd.setHours(23, 59, 59, 999);
+        const diffTime = Math.abs(
+          currentPeriodEnd.getTime() - currentPeriodStart.getTime(),
+        );
+        daysBack = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      } else {
+        // Use range-based calculation
+        daysBack = range;
+        currentPeriodStart = new Date();
+        currentPeriodStart.setDate(currentPeriodStart.getDate() - daysBack);
+        currentPeriodEnd = new Date();
+        currentPeriodEnd.setHours(23, 59, 59, 999);
+      }
 
       const currentPeriodAppointments = await prisma.appointment.findMany({
         where: {
-          startDateTime: { gte: currentPeriodStart },
+          startDateTime: {
+            gte: currentPeriodStart,
+            lte: currentPeriodEnd,
+          },
         },
         select: { startDateTime: true },
       });
@@ -210,12 +299,6 @@ const app = new Hono()
       const currentMap = new Map<string, number>();
       const previousMap = new Map<string, number>();
 
-      const formatHourKey = (date: Date): string => {
-        const d = new Date(date);
-        d.setMinutes(0, 0, 0);
-        return d.toISOString();
-      };
-
       const formatDayKey = (date: Date): string => {
         const d = new Date(date);
         d.setHours(0, 0, 0, 0);
@@ -224,75 +307,82 @@ const app = new Hono()
 
       const formatWeekKey = (date: Date): string => {
         const d = new Date(date);
-        // Get the Monday of the week
-        const day = d.getDay();
-        const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-        d.setDate(diff);
-        d.setHours(0, 0, 0, 0);
-        return d.toISOString().split("T")[0];
+        // Get ISO week number
+        const week = getISOWeek(d);
+        return `${d.getFullYear()}-W${week.toString().padStart(2, "0")}`;
       };
 
       const formatMonthKey = (date: Date): string => {
         const d = new Date(date);
-        d.setDate(1);
-        d.setHours(0, 0, 0, 0);
-        return d.toISOString().split("T")[0];
+        return `${d.getFullYear()}-${(d.getMonth() + 1).toString().padStart(2, "0")}`;
       };
 
-      // Aggregate based on period
-      const aggregationFn = (period: string) => {
-        if (period === "day") {
-          return formatHourKey;
-        } else if (period === "week") {
-          return formatWeekKey;
-        } else if (period === "month") {
-          return formatMonthKey;
+      // Aggregation key generator
+      const getAggregationKey = (period: string, date: Date): string => {
+        switch (period) {
+          case "day":
+            return formatDayKey(date);
+          case "week":
+            return formatWeekKey(date);
+          case "month":
+            return formatMonthKey(date);
+          default:
+            return formatDayKey(date);
         }
-        return formatDayKey;
       };
 
-      const formatKey = aggregationFn(period);
-
+      // Aggregate current period appointments
       currentPeriodAppointments.forEach((apt) => {
-        const key = formatKey(apt.startDateTime);
+        const key = getAggregationKey(period, apt.startDateTime);
         currentMap.set(key, (currentMap.get(key) ?? 0) + 1);
       });
+
+      // Aggregate previous period appointments
       previousPeriodAppointments.forEach((apt) => {
-        const key = formatKey(apt.startDateTime);
+        const key = getAggregationKey(period, apt.startDateTime);
         previousMap.set(key, (previousMap.get(key) ?? 0) + 1);
       });
 
       // Generate complete timeline based on period
       const data: TimeseriesDataPoint[] = [];
-      const now = new Date();
-      const startDate = new Date(now);
-      startDate.setDate(startDate.getDate() - daysBack);
+      const timelineStart = new Date(currentPeriodStart);
 
       if (period === "day") {
-        // Generate hourly data points
-        for (let i = 0; i < daysBack * 24; i++) {
-          const date = new Date(startDate);
-          date.setHours(date.getHours() + i);
-          date.setMinutes(0, 0, 0);
-          const key = formatHourKey(date);
+        // Generate daily data points from start to end date
+        const currentDate = new Date(timelineStart);
+        while (currentDate <= currentPeriodEnd) {
+          const date = new Date(currentDate);
+          date.setHours(0, 0, 0, 0);
+          const key = formatDayKey(date);
 
+          const formatted = formatDateForPeriod("day", date);
           data.push({
-            date: key,
+            date: formatted.date,
+            fullDate: formatted.fullDate,
+            isoDate: formatted.isoDate,
             count: currentMap.get(key) ?? 0,
             previousPeriodCount: previousMap.get(key) ?? 0,
           });
+          // Move to next day
+          currentDate.setDate(currentDate.getDate() + 1);
         }
       } else if (period === "week") {
         // Generate weekly data points
         const weeksBack = Math.ceil(daysBack / 7);
         for (let i = 0; i < weeksBack; i++) {
-          const date = new Date(startDate);
+          const date = new Date(timelineStart);
           date.setDate(date.getDate() + i * 7);
           date.setHours(0, 0, 0, 0);
-          const key = date.toISOString().split("T")[0];
+          const key = formatWeekKey(date);
 
+          // Avoid duplicates
+          if (data.some((d) => d.isoDate === key)) continue;
+
+          const formatted = formatDateForPeriod(period, date);
           data.push({
-            date: key,
+            date: formatted.date,
+            fullDate: formatted.fullDate,
+            isoDate: formatted.isoDate,
             count: currentMap.get(key) ?? 0,
             previousPeriodCount: previousMap.get(key) ?? 0,
           });
@@ -300,15 +390,23 @@ const app = new Hono()
       } else if (period === "month") {
         // Generate monthly data points
         const monthsBack = Math.ceil(daysBack / 30);
-        for (let i = 0; i < monthsBack; i++) {
-          const date = new Date(startDate);
-          date.setMonth(date.getMonth() + i);
-          date.setDate(1);
-          date.setHours(0, 0, 0, 0);
-          const key = date.toISOString().split("T")[0];
+        const startMonth = new Date(timelineStart);
+        startMonth.setDate(1);
 
+        for (let i = 0; i < monthsBack; i++) {
+          const date = new Date(startMonth);
+          date.setMonth(startMonth.getMonth() + i);
+          date.setHours(0, 0, 0, 0);
+          const key = formatMonthKey(date);
+
+          // Avoid duplicates
+          if (data.some((d) => d.isoDate === key)) continue;
+
+          const formatted = formatDateForPeriod(period, date);
           data.push({
-            date: key,
+            date: formatted.date,
+            fullDate: formatted.fullDate,
+            isoDate: formatted.isoDate,
             count: currentMap.get(key) ?? 0,
             previousPeriodCount: previousMap.get(key) ?? 0,
           });
@@ -316,13 +414,16 @@ const app = new Hono()
       } else {
         // Fallback: generate daily data points
         for (let i = 0; i < daysBack; i++) {
-          const date = new Date(startDate);
+          const date = new Date(timelineStart);
           date.setDate(date.getDate() + i);
           date.setHours(0, 0, 0, 0);
-          const key = date.toISOString().split("T")[0];
+          const key = formatDayKey(date);
 
+          const formatted = formatDateForPeriod("day", date);
           data.push({
-            date: key,
+            date: formatted.date,
+            fullDate: formatted.fullDate,
+            isoDate: formatted.isoDate,
             count: currentMap.get(key) ?? 0,
             previousPeriodCount: previousMap.get(key) ?? 0,
           });
@@ -330,12 +431,28 @@ const app = new Hono()
       }
 
       // Validate no duplicate dates
-      const uniqueKeys = new Set(data.map((d) => d.date));
+      const uniqueKeys = new Set(data.map((d) => d.isoDate));
       if (uniqueKeys.size !== data.length) {
         console.warn(
           `Duplicate dates detected: ${data.length - uniqueKeys.size} duplicates`,
         );
       }
+
+      // DEBUG: Log timeseries data structure
+      console.log(
+        "[TIMESERIES DEBUG] Data sample (first 5):",
+        data.slice(0, 5).map((d) => ({
+          date: d.date,
+          fullDate: d.fullDate,
+          isoDate: d.isoDate,
+          count: d.count,
+          prevCount: d.previousPeriodCount,
+        })),
+      );
+      console.log(
+        "[TIMESERIES DEBUG] All dates:",
+        data.map((d) => d.isoDate),
+      );
 
       return jsonResponse(c, data);
     } catch (error) {
@@ -484,8 +601,7 @@ const app = new Hono()
         const periodStart = new Date(periodEnd);
         periodStart.setDate(periodStart.getDate() - daysPerPeriod);
 
-        // Current period
-        const currentCount = await prisma.appointment.count({
+        const count = await prisma.appointment.count({
           where: {
             startDateTime: {
               gte: periodStart,
@@ -494,41 +610,20 @@ const app = new Hono()
           },
         });
 
-        // Previous period
-        const previousPeriodEnd = new Date(periodStart);
-        const previousPeriodStart = new Date(periodStart);
-        previousPeriodStart.setDate(
-          previousPeriodStart.getDate() - daysPerPeriod,
-        );
-
-        const previousCount = await prisma.appointment.count({
-          where: {
-            startDateTime: {
-              gte: previousPeriodStart,
-              lt: previousPeriodEnd,
-            },
-          },
-        });
-
-        // Calculate growth rate
-        const growth =
-          previousCount > 0
-            ? ((currentCount - previousCount) / previousCount) * 100
-            : currentCount > 0
-              ? 100
-              : 0;
-
-        // Format period label
-        const periodLabel =
-          period === "week"
-            ? `Week of ${periodStart.toISOString().split("T")[0]}`
-            : periodStart.toISOString().split("T")[0];
+        // Create label based on period
+        let label: string;
+        if (period === "week") {
+          const week = getISOWeek(periodEnd);
+          label = `${periodEnd.getFullYear()}-W${week.toString().padStart(2, "0")}`;
+        } else {
+          label = `${periodEnd.getFullYear()}-${(periodEnd.getMonth() + 1).toString().padStart(2, "0")}`;
+        }
 
         data.push({
-          period: periodLabel,
-          current: currentCount,
-          previous: previousCount,
-          growth: Math.round(growth * 100) / 100,
+          period: label,
+          current: count,
+          previous: 0,
+          growth: 0,
         });
       }
 
