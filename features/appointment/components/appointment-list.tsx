@@ -63,7 +63,7 @@ import {
   AppointmentStatus,
   UpdateAppointmentStatus,
 } from "@/features/appointment/api/use-appointments";
-import { useDebouncedSearch } from "@/features/appointment/hooks/use-debounced-search";
+import { useDebouncedSearch } from "@/hooks/use-debounced-search";
 import { AppointmentActionsDropdown } from "./appointment-actions-dropdown";
 import {
   statusColors,
@@ -570,7 +570,6 @@ export function AppointmentList({
                     </TableRow>
                   );
                 })}
-                \
               </TableBody>
             </Table>
           </div>

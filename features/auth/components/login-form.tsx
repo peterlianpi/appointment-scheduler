@@ -5,11 +5,8 @@ import { useRouter } from "next/navigation";
 import { FormProvider, useForm } from "react-hook-form";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Eye, EyeOff } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Card,
@@ -18,22 +15,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { FieldGroup, Field, FieldLabel } from "@/components/ui/field";
+import { FieldGroup } from "@/components/ui/field";
 import { toast } from "sonner";
 import { FormField } from "@/features/form/components";
+import { PasswordInput } from "@/features/auth/components/password-input";
 import Link from "next/link";
-
-// ============================================
-// Zod Schema
-// ============================================
-
-const loginFormSchema = z.object({
-  email: z.string().email("Invalid email address"),
-  password: z.string().min(1, "Password is required"),
-  rememberMe: z.boolean(),
-});
-
-type LoginFormValues = z.infer<typeof loginFormSchema>;
+import { loginFormSchema, type LoginFormValues } from "../lib/schemas";
 
 // ============================================
 // Component
@@ -41,11 +28,14 @@ type LoginFormValues = z.infer<typeof loginFormSchema>;
 
 export function LoginForm({
   className,
+  redirectUrl,
   ...props
-}: React.ComponentProps<"div">) {
+}: {
+  className?: string;
+  redirectUrl?: string;
+}) {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginFormSchema),
@@ -95,7 +85,7 @@ export function LoginForm({
       }
 
       toast.success("Login successful!");
-      router.push("/dashboard");
+      router.push(redirectUrl || "/dashboard");
       router.refresh();
     } catch {
       setError("root", { message: "An unexpected error occurred" });
@@ -127,37 +117,12 @@ export function LoginForm({
                   disabled={isLoading}
                   required
                 />
-                <Field>
-                  <FieldLabel htmlFor="password">Password</FieldLabel>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Enter your password"
-                      disabled={isLoading}
-                      {...form.register("password")}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={
-                        showPassword ? "Hide password" : "Show password"
-                      }
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                  {form.formState.errors.password && (
-                    <p className="text-sm text-red-500">
-                      {form.formState.errors.password.message}
-                    </p>
-                  )}
-                </Field>
+                <PasswordInput
+                  name="password"
+                  form={form}
+                  disabled={isLoading}
+                  required
+                />
                 <p className="text-sm text-right">
                   <Link
                     href="/forgot-password"
@@ -211,18 +176,6 @@ export function LoginForm({
                 <FieldGroup>
                   <Button type="submit" disabled={isLoading}>
                     {isLoading ? "Logging in..." : "Login"}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    type="button"
-                    disabled={isLoading}
-                    onClick={() =>
-                      authClient.signIn.social({
-                        provider: "google",
-                      })
-                    }
-                  >
-                    Login with Google
                   </Button>
                   <p className="text-center text-sm text-muted-foreground">
                     Don&apos;t have an account?{" "}

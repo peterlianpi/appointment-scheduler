@@ -14,12 +14,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Field, FieldLabel, FieldGroup } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import { FieldGroup } from "@/components/ui/field";
 import { toast } from "sonner";
 import { ArrowLeft, CheckCircle2, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { ResetPasswordFormProps } from "../types/auth";
+import { PasswordInput } from "@/features/auth/components/password-input";
 
 // ============================================
 // Zod Schema
@@ -36,61 +36,6 @@ const resetPasswordSchema = z
   });
 
 type ResetPasswordValues = z.infer<typeof resetPasswordSchema>;
-
-// ============================================
-// Password Input Component
-// ============================================
-
-interface PasswordInputProps {
-  name: "password" | "confirmPassword";
-  label?: string;
-  placeholder?: string;
-  disabled?: boolean;
-  form: ReturnType<typeof useForm<ResetPasswordValues>>;
-  showStrength?: boolean;
-}
-
-function PasswordInput({
-  name,
-  label,
-  placeholder,
-  disabled,
-  form,
-  showStrength,
-}: PasswordInputProps) {
-  const [showPassword, setShowPassword] = useState(false);
-
-  return (
-    <Field>
-      <FieldLabel>{label}</FieldLabel>
-      <div className="relative">
-        <Input
-          type={showPassword ? "text" : "password"}
-          placeholder={placeholder}
-          disabled={disabled}
-          {...form.register(name)}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-          aria-label={showPassword ? "Hide password" : "Show password"}
-        >
-          {showPassword ? (
-            <span className="h-4 w-4">🙈</span>
-          ) : (
-            <span className="h-4 w-4">👁️</span>
-          )}
-        </button>
-      </div>
-      {form.formState.errors[name] && (
-        <p className="text-sm text-red-500">
-          {form.formState.errors[name]?.message}
-        </p>
-      )}
-    </Field>
-  );
-}
 
 // ============================================
 // Reset Password Content Component
@@ -195,20 +140,15 @@ function ResetPasswordContent({ className }: { className?: string }) {
                 form={form}
                 showStrength
               />
-              <Field>
-                <FieldLabel>Confirm Password</FieldLabel>
-                <Input
-                  type="password"
-                  placeholder="Confirm your new password"
-                  disabled={isLoading}
-                  {...form.register("confirmPassword")}
-                />
-                {form.formState.errors.confirmPassword && (
-                  <p className="text-sm text-red-500">
-                    {form.formState.errors.confirmPassword.message}
-                  </p>
-                )}
-              </Field>
+              <PasswordInput
+                name="confirmPassword"
+                label="Confirm Password"
+                placeholder="Confirm your new password"
+                disabled={isLoading}
+                form={form}
+                showConfirm
+                confirmPassword={form.watch("password")}
+              />
               {form.formState.errors.root && (
                 <p className="text-sm text-red-500">
                   {form.formState.errors.root.message}

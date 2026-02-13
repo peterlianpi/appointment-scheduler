@@ -81,8 +81,7 @@ export default function SettingsPage() {
   });
 
   // Profile form state
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
 
   // Appointment settings state
@@ -103,10 +102,7 @@ export default function SettingsPage() {
   // Sync profile form with session
   useEffect(() => {
     if (session?.user) {
-      const userName = session.user.name || "";
-      const names = userName.split(" ");
-      setFirstName(names.slice(0, -1).join(" ") || "");
-      setLastName(names.slice(-1).join(" ") || "");
+      setFullName(session.user.name || "");
       setEmail(session.user.email || "");
     }
   }, [session]);
@@ -130,8 +126,6 @@ export default function SettingsPage() {
   const handleSaveProfile = async () => {
     setIsSavingProfile(true);
     try {
-      const fullName = `${firstName} ${lastName}`.trim();
-
       // Update name if changed
       if (fullName !== session?.user?.name) {
         const result = await updateProfileName(fullName);
@@ -229,27 +223,15 @@ export default function SettingsPage() {
             </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
-                <Input
-                  id="firstName"
-                  placeholder="John"
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
-                  disabled={isLoadingSession}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
-                <Input
-                  id="lastName"
-                  placeholder="Doe"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  disabled={isLoadingSession}
-                />
-              </div>
+            <div className="space-y-2">
+              <Label htmlFor="fullName">Full Name</Label>
+              <Input
+                id="fullName"
+                placeholder="John Doe"
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                disabled={isLoadingSession}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>

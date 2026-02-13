@@ -13,23 +13,14 @@ import {
 } from "@/features/appointment/api/use-appointments";
 import { AppointmentFormValues } from "@/features/appointment/types";
 import {
+  useAppointmentForm,
+  formatDateTime,
+  appointmentFormDefaultValues,
+} from "@/features/appointment/hooks/use-appointment-form";
+import {
   AppointmentFormFields,
   AppointmentFormActions,
 } from "./appointment-form-fields";
-
-// ============================================
-// Default Form Values
-// ============================================
-
-const defaultValues: AppointmentFormValues = {
-  title: "",
-  description: "",
-  startDateTime: "",
-  endDateTime: "",
-  location: "",
-  meetingUrl: "",
-  emailNotification: false,
-};
 
 // ============================================
 // Component Props
@@ -39,17 +30,6 @@ interface AppointmentFormStandaloneProps {
   appointment?: Appointment | null;
   onSuccess?: () => void;
   onCancel?: () => void;
-}
-
-// ============================================
-// Helper Functions
-// ============================================
-
-function formatDateTime(value: string): string {
-  if (!value) return "";
-  const date = new Date(value);
-  if (isNaN(date.getTime())) return "";
-  return date.toISOString();
 }
 
 // ============================================
@@ -68,7 +48,7 @@ export function AppointmentFormStandalone({
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const methods = useForm<AppointmentFormValues>({
-    defaultValues,
+    defaultValues: appointmentFormDefaultValues,
   });
 
   const { reset, handleSubmit } = methods;
@@ -86,7 +66,7 @@ export function AppointmentFormStandalone({
         emailNotification: appointment.emailNotificationSent,
       });
     } else {
-      reset(defaultValues);
+      reset(appointmentFormDefaultValues);
     }
   }, [appointment, reset]);
 
@@ -132,9 +112,10 @@ export function AppointmentFormStandalone({
       router.push("/appointments");
       onSuccess?.();
     } catch (error) {
-      const errorMessage = error instanceof Error
-        ? error.message
-        : "Failed to create/update appointment";
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to create/update appointment";
       toast.error(errorMessage);
     }
   };

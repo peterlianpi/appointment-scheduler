@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { FormProvider, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,27 +23,9 @@ import {
 import { toast } from "sonner";
 import { sendWelcomeEmail, resendVerificationEmail } from "../lib/auth-api";
 import { PasswordInput } from "@/features/auth/components/password-input";
-import { PasswordStrengthIndicator } from "@/features/auth/components/password-strength-indicator";
 import { cn } from "@/lib/utils";
 import type { RegisterFormProps } from "../types/auth";
-
-// ============================================
-// Zod Schema
-// ============================================
-
-const registerFormSchema = z
-  .object({
-    name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email address"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string().min(1, "Please confirm your password"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords do not match",
-    path: ["confirmPassword"],
-  });
-
-type RegisterFormValues = z.infer<typeof registerFormSchema>;
+import { registerFormSchema, type RegisterFormValues } from "../lib/schemas";
 
 // ============================================
 // Register Form Component
@@ -188,11 +169,7 @@ export function RegisterForm({
                   placeholder="Create a password"
                   disabled={isLoading}
                   form={form}
-                />
-                <PasswordStrengthIndicator
-                  password={form.watch("password") || ""}
-                  name={form.watch("name") || ""}
-                  email={form.watch("email") || ""}
+                  showStrength
                 />
               </Field>
 
@@ -226,9 +203,6 @@ export function RegisterForm({
               <Field>
                 <Button type="submit" disabled={isLoading}>
                   {isLoading ? "Creating account..." : "Create Account"}
-                </Button>
-                <Button variant="outline" type="button" disabled={isLoading}>
-                  Sign up with Google
                 </Button>
 
                 {showLoginLink && (

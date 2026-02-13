@@ -71,6 +71,20 @@ export type { AuthApiResponse } from "./types/auth";
 export type { ValidationError } from "./types/auth";
 
 // ============================================
+// Schema Exports
+// ============================================
+
+/**
+ * Login form Zod schema and types.
+ */
+export { loginFormSchema, type LoginFormValues } from "./lib/schemas";
+
+/**
+ * Register form Zod schema and types.
+ */
+export { registerFormSchema, type RegisterFormValues } from "./lib/schemas";
+
+// ============================================
 // Component Exports
 // ============================================
 
@@ -90,10 +104,6 @@ export type { ValidationError } from "./types/auth";
  * />
  * ```
  *
- * @see {@link https://github.com/your-org/appointment-scheduler/blob/main/features/auth/README.md | README}
- * @see {@link https://github.com/your-org/appointment-scheduler/blob/main/features/auth/components/login-page.tsx | Source}
- */
-export { LoginPage } from "./components/login-page";
 
 /**
  * Registration form component with name, email, password fields and validation.
@@ -199,16 +209,18 @@ export {
 // ============================================
 
 /**
- * Legacy login form component.
- * @deprecated Use {@link LoginPage} instead for complete login page functionality.
+ * Login form component.
+ *
+ * @example
+ * ```tsx
+ * import { LoginForm } from "@/features/auth";
+ *
+ * <LoginForm
+ *   redirectUrl="/dashboard"
+ * />
+ * ```
  */
 export { LoginForm } from "./components/login-form";
-
-/**
- * Legacy signup form component.
- * @deprecated Use {@link RegisterForm} instead.
- */
-export { SignupForm } from "./components/signup-form";
 
 /**
  * Password input with visibility toggle.

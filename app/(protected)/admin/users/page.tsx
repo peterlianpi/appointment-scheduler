@@ -91,7 +91,7 @@ export default function AdminUsersPage() {
 
       {/* Users Table */}
       <div className="flex-1 rounded-xl bg-muted/50 md:min-h-min">
-        <div className="p-6">
+        <div className="p-1">
           {isLoading ? (
             <div className="space-y-3">
               {Array.from({ length: 5 }).map((_, i) => (

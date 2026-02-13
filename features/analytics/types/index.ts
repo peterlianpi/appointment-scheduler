@@ -2,12 +2,9 @@
 // ANALYTICS TYPES
 // ============================================
 
-// Appointment status type
-export type AppointmentStatus =
-  | "SCHEDULED"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NO_SHOW";
+// Import shared AppointmentStatus type
+import type { AppointmentStatus } from "@/types/appointment";
+export type { AppointmentStatus };
 
 // ============================================
 // OVERVIEW ENDPOINT TYPES

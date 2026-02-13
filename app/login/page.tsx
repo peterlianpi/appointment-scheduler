@@ -1,4 +1,4 @@
-import { LoginPageWrapper } from "@/features/auth/components/auth-form-wrapper";
+import { LoginForm } from "@/features/auth/components/login-form";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -6,24 +6,26 @@ import { redirect } from "next/navigation";
 export default async function LoginPageRoute({
   searchParams,
 }: {
-  searchParams: Promise<{ callbackURL?: string }>;
+  searchParams: Promise<{ callbackUrl?: string }>;
 }) {
-  const { callbackURL } = await searchParams;
-
   // Check if user is already authenticated
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  // Redirect already authenticated users to dashboard or callbackURL
+  // Redirect already authenticated users to dashboard
   if (session) {
-    redirect(callbackURL || "/dashboard");
+    redirect("/dashboard");
   }
+
+  // Get callback URL for OAuth redirects
+  const params = await searchParams;
+  const callbackUrl = params.callbackUrl;
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        <LoginPageWrapper redirectUrl={callbackURL} />
+        <LoginForm redirectUrl={callbackUrl} />
       </div>
     </div>
   );

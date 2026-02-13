@@ -2,12 +2,9 @@
 // Core Appointment Types
 // ============================================
 
-export type AppointmentStatus =
-  | "SCHEDULED"
-  | "IN_PROGRESS"
-  | "COMPLETED"
-  | "CANCELLED"
-  | "NO_SHOW";
+// Import and re-export shared AppointmentStatus type
+import type { AppointmentStatus } from "@/types/appointment";
+export type { AppointmentStatus };
 
 // Statuses that can be used to update an appointment status (matches API)
 export type UpdateAppointmentStatus = "COMPLETED" | "CANCELLED" | "NO_SHOW";
