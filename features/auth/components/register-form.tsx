@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { sendWelcomeEmail, resendVerificationEmail } from "../lib/auth-api";
 import { PasswordInput } from "@/features/auth/components/password-input";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 import type { RegisterFormProps } from "../types/auth";
 import { registerFormSchema, type RegisterFormValues } from "../lib/schemas";
 
@@ -208,9 +209,12 @@ export function RegisterForm({
                 {showLoginLink && (
                   <FieldDescription className="px-6 text-center">
                     Already have an account?{" "}
-                    <a href="/login" className="underline underline-offset-4">
+                    <Link
+                      href="/login"
+                      className="underline underline-offset-4"
+                    >
                       Sign in
-                    </a>
+                    </Link>
                   </FieldDescription>
                 )}
               </Field>

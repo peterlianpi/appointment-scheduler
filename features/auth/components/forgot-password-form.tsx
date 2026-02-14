@@ -93,15 +93,9 @@ export function ForgotPasswordForm({ className }: ForgotPasswordFormProps) {
           <p className="text-sm text-muted-foreground text-center">
             If you don&apos;t receive an email within a few minutes, check your spam
             folder or{" "}
-            <button
-              onClick={() => {
-                setIsSuccess(false);
-                form.reset();
-              }}
-              className="text-primary underline underline-offset-4 hover:text-primary/80"
-            >
+            <Button variant="link" className="h-auto p-0 text-primary" onClick={() => router.push("/login")}>
               try again
-            </button>
+            </Button>
             .
           </p>
           <Button

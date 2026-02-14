@@ -97,9 +97,18 @@ export function NotificationList() {
                         ? "ring-2 ring-primary/20"
                         : ""
                     } ${notification.read ? "hover:opacity-100" : ""}`}
+                    role="button"
+                    tabIndex={0}
                     onClick={() => {
                       if (!notification.read) {
                         handleMarkAsRead(notification.id);
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        if (!notification.read) {
+                          handleMarkAsRead(notification.id);
+                        }
                       }
                     }}
                   >

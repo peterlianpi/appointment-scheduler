@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { FormProvider, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { cn } from "@/lib/utils";
@@ -16,8 +16,17 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { FieldGroup } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { FormField } from "@/features/form/components";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormDescription,
+  FormMessage,
+} from "@/components/ui/form";
 import { PasswordInput } from "@/features/auth/components/password-input";
 import Link from "next/link";
 import { loginFormSchema, type LoginFormValues } from "../lib/schemas";
@@ -105,17 +114,29 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <FormProvider {...form}>
+          <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <FieldGroup>
                 <FormField
+                  control={form.control}
                   name="email"
-                  label="Email"
-                  type="email"
-                  placeholder="m@example.com"
-                  description="We'll never share your email with anyone else."
-                  disabled={isLoading}
-                  required
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          type="email"
+                          placeholder="m@example.com"
+                          disabled={isLoading}
+                        />
+                      </FormControl>
+                      <FormDescription>
+                        We&apos;ll never share your email with anyone else.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
                 <PasswordInput
                   name="password"
@@ -163,12 +184,12 @@ export function LoginForm({
                         ?.toLowerCase()
                         .includes("email not verified")) && (
                       <p className="text-sm text-blue-600">
-                        <a
+                        <Link
                           href="/verification-pending"
                           className="underline underline-offset-4 hover:text-blue-800"
                         >
                           Click here to resend verification email
-                        </a>
+                        </Link>
                       </p>
                     )}
                   </div>
@@ -179,14 +200,17 @@ export function LoginForm({
                   </Button>
                   <p className="text-center text-sm text-muted-foreground">
                     Don&apos;t have an account?{" "}
-                    <a href="/signup" className="underline underline-offset-4">
+                    <Link
+                      href="/signup"
+                      className="underline underline-offset-4"
+                    >
                       Sign up
-                    </a>
+                    </Link>
                   </p>
                 </FieldGroup>
               </FieldGroup>
             </form>
-          </FormProvider>
+          </Form>
         </CardContent>
       </Card>
     </div>

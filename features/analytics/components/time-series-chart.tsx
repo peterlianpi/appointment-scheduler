@@ -11,6 +11,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartTooltipContent } from "@/components/ui/chart";
 import type { TimeseriesDataPoint } from "@/features/analytics/types";
@@ -87,12 +88,9 @@ export function TimeSeriesChart({
           <div className="text-center">
             <p className="text-muted-foreground text-sm">Failed to load data</p>
             {onRetry && (
-              <button
-                onClick={onRetry}
-                className="mt-2 text-sm text-primary hover:underline touch-target min-h-[44px] px-3"
-              >
+              <Button variant="link" onClick={onRetry} className="mt-2">
                 Try again
-              </button>
+              </Button>
             )}
           </div>
         </CardContent>
@@ -123,17 +121,15 @@ export function TimeSeriesChart({
         </CardTitle>
         <div className="flex gap-1 rounded-md border p-1">
           {(["day", "week", "month"] as const).map((p) => (
-            <button
+            <Button
               key={p}
+              variant={period === p ? "default" : "ghost"}
+              size="sm"
               disabled
-              className={`px-3 py-1.5 text-xs capitalize touch-target min-h-[36px] ${
-                period === p
-                  ? "bg-primary text-primary-foreground rounded"
-                  : "text-muted-foreground"
-              }`}
+              className="px-3 text-xs capitalize"
             >
               {p}
-            </button>
+            </Button>
           ))}
         </div>
       </CardHeader>

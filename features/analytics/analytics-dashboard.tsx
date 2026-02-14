@@ -6,6 +6,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { AnalyticsStatsGrid } from "@/features/analytics/components/analytics-stats-grid";
 import { TimeSeriesChart } from "@/features/analytics/components/time-series-chart";
@@ -83,10 +84,10 @@ export function AnalyticsDashboard({
       {/* Key Metrics - Collapsible on mobile */}
       <Collapsible defaultOpen className="space-y-3">
         <CollapsibleTrigger asChild>
-          <button className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors touch-target">
+          <Button variant="ghost" className="justify-between w-full">
             <span className="text-sm font-medium">Key Metrics</span>
             <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-          </button>
+          </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="collapsible-content expanded">
           <AnalyticsStatsGrid
@@ -103,12 +104,12 @@ export function AnalyticsDashboard({
         {/* Time Series Chart - Full Width */}
         <Collapsible defaultOpen className="space-y-3">
           <CollapsibleTrigger asChild>
-            <button className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors touch-target">
+            <Button variant="ghost" className="justify-between w-full">
               <span className="text-sm font-medium">
                 Appointments Over Time
               </span>
               <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-            </button>
+            </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="collapsible-content expanded">
             <TimeSeriesChart
@@ -125,10 +126,10 @@ export function AnalyticsDashboard({
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 charts-grid-2-col">
           <Collapsible className="space-y-3">
             <CollapsibleTrigger asChild>
-              <button className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors touch-target">
+              <Button variant="ghost" className="justify-between w-full">
                 <span className="text-sm font-medium">Status Distribution</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-              </button>
+              </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="collapsible-content expanded">
               <StatusDistributionChart
@@ -141,10 +142,10 @@ export function AnalyticsDashboard({
           </Collapsible>
           <Collapsible className="space-y-3">
             <CollapsibleTrigger asChild>
-              <button className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors touch-target">
+              <Button variant="ghost" className="justify-between w-full">
                 <span className="text-sm font-medium">Weekly Heatmap</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-              </button>
+              </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="collapsible-content expanded">
               <AppointmentHeatmap
@@ -161,12 +162,12 @@ export function AnalyticsDashboard({
         <div className="grid gap-4 sm:gap-6 lg:grid-cols-2 charts-grid-2-col">
           <Collapsible className="space-y-3">
             <CollapsibleTrigger asChild>
-              <button className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors touch-target">
+              <Button variant="ghost" className="justify-between w-full">
                 <span className="text-sm font-medium">
                   Appointments by Hour
                 </span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-              </button>
+              </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="collapsible-content expanded">
               <TimeSlotsChart
@@ -179,10 +180,10 @@ export function AnalyticsDashboard({
           </Collapsible>
           <Collapsible className="space-y-3">
             <CollapsibleTrigger asChild>
-              <button className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors touch-target">
+              <Button variant="ghost" className="justify-between w-full">
                 <span className="text-sm font-medium">Trend Comparison</span>
                 <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform data-[state=open]:rotate-180" />
-              </button>
+              </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="collapsible-content expanded">
               <TrendComparisonChart

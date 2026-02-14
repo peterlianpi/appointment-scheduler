@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ChartLegendContent } from "@/components/ui/chart";
@@ -87,12 +88,14 @@ export function StatusDistributionChart({
           <div className="text-center">
             <p className="text-muted-foreground text-sm">Failed to load data</p>
             {onRetry && (
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={onRetry}
-                className="mt-2 text-sm text-primary hover:underline touch-target min-h-[44px] px-3"
+                className="mt-2"
               >
                 Try again
-              </button>
+              </Button>
             )}
           </div>
         </CardContent>
@@ -202,7 +205,9 @@ export function StatusDistributionChart({
         {/* Mobile-friendly legend below chart */}
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs sm:text-sm">
           {chartData.map((item, index) => (
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
               key={item.status}
               onClick={() =>
                 setSelectedSegment(
@@ -220,7 +225,7 @@ export function StatusDistributionChart({
                 style={{ backgroundColor: item.fill }}
               />
               <span className="truncate">{item.name}</span>
-            </button>
+            </Button>
           ))}
         </div>
 

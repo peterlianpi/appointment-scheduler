@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { PasswordStrengthIndicator } from "@/features/auth/components/password-strength-indicator";
@@ -51,10 +52,12 @@ export function PasswordInput({
           disabled={disabled}
           {...form?.register(name)}
         />
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+          className="absolute right-0 top-0 h-full px-3 hover:bg-transparent"
           aria-label={showPassword ? "Hide password" : "Show password"}
           tabIndex={-1}
         >
@@ -63,7 +66,7 @@ export function PasswordInput({
           ) : (
             <Eye className="h-4 w-4" />
           )}
-        </button>
+        </Button>
       </div>
       {showStrength && form && (
         <PasswordStrengthIndicator

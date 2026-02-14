@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Calendar, Download } from "lucide-react";
 import {
   useAdminStats,
@@ -59,38 +60,54 @@ export function AdminPage() {
       {/* Stats Summary */}
       {stats?.success && stats.data && (
         <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div className="p-3 sm:p-4 rounded-lg border bg-card">
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              Total
-            </div>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.data.totalAppointments}
-            </div>
-          </div>
-          <div className="p-3 sm:p-4 rounded-lg border bg-card">
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              Upcoming
-            </div>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.data.upcomingAppointments}
-            </div>
-          </div>
-          <div className="p-3 sm:p-4 rounded-lg border bg-card">
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              Completion Rate
-            </div>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.data.completionRate.toFixed(1)}%
-            </div>
-          </div>
-          <div className="p-3 sm:p-4 rounded-lg border bg-card">
-            <div className="text-xs sm:text-sm text-muted-foreground">
-              Cancellation Rate
-            </div>
-            <div className="text-xl sm:text-2xl font-bold">
-              {stats.data.cancellationRate.toFixed(1)}%
-            </div>
-          </div>
+          <Card>
+            <CardHeader className="p-3 sm:p-4 pb-0">
+              <CardTitle className="text-xs sm:text-sm text-muted-foreground">
+                Total
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-1">
+              <div className="text-xl sm:text-2xl font-bold">
+                {stats.data.totalAppointments}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="p-3 sm:p-4 pb-0">
+              <CardTitle className="text-xs sm:text-sm text-muted-foreground">
+                Upcoming
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-1">
+              <div className="text-xl sm:text-2xl font-bold">
+                {stats.data.upcomingAppointments}
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="p-3 sm:p-4 pb-0">
+              <CardTitle className="text-xs sm:text-sm text-muted-foreground">
+                Completion Rate
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-1">
+              <div className="text-xl sm:text-2xl font-bold">
+                {stats.data.completionRate.toFixed(1)}%
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="p-3 sm:p-4 pb-0">
+              <CardTitle className="text-xs sm:text-sm text-muted-foreground">
+                Cancellation Rate
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-3 sm:p-4 pt-1">
+              <div className="text-xl sm:text-2xl font-bold">
+                {stats.data.cancellationRate.toFixed(1)}%
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

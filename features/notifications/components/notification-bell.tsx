@@ -12,6 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
   useNotifications,
@@ -108,9 +109,12 @@ export function NotificationBell() {
         <Button variant="outline" size="icon" className="relative">
           <Bell className="h-[1.2rem] w-[1.2rem]" />
           {unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-medium text-white">
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-4 w-4 p-0 flex items-center justify-center text-[10px]"
+            >
               {unreadCount > 9 ? "9+" : unreadCount}
-            </span>
+            </Badge>
           )}
           <span className="sr-only">Notifications</span>
         </Button>
@@ -151,7 +155,7 @@ export function NotificationBell() {
               <div className="flex w-full items-center justify-between">
                 <span className="font-medium">{notification.title}</span>
                 {!notification.read && (
-                  <span className="h-2 w-2 rounded-full bg-blue-500" />
+                  <Badge className="h-2 w-2 p-0 bg-blue-500 border-0" />
                 )}
               </div>
               <span className="text-sm text-muted-foreground">

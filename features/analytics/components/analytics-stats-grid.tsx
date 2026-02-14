@@ -9,6 +9,7 @@ import {
   Percent,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { OverviewMetrics } from "@/features/analytics/types";
 
@@ -140,12 +141,14 @@ export function AnalyticsStatsGrid({
               Failed to load statistics
             </p>
             {onRetry && (
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={onRetry}
-                className="mt-2 text-sm text-primary hover:underline touch-target min-h-[44px] px-3"
+                className="mt-2"
               >
                 Try again
-              </button>
+              </Button>
             )}
           </div>
         </CardContent>

@@ -12,6 +12,7 @@ import {
   Cell,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { TimeSlotData } from "@/features/analytics/types";
 
@@ -102,12 +103,14 @@ export function TimeSlotsChart({
           <div className="text-center">
             <p className="text-muted-foreground text-sm">Failed to load data</p>
             {onRetry && (
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={onRetry}
-                className="mt-2 text-sm text-primary hover:underline touch-target min-h-[44px] px-3"
+                className="mt-2"
               >
                 Try again
-              </button>
+              </Button>
             )}
           </div>
         </CardContent>

@@ -292,17 +292,19 @@ export function AppointmentList({
               className="pl-9 pr-9"
             />
             {searchInput && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => {
                   clearSearch();
                   if (onSearchChange) {
                     onSearchChange("");
                   }
                 }}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                className="absolute right-3 top-1/2 -translate-y-1/2 h-8 w-8"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </div>
 

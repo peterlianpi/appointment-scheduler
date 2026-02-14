@@ -100,8 +100,9 @@ export function AnalyticsFilters({
   return (
     <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
       <CollapsibleTrigger asChild>
-        <button
-          className="flex items-center justify-between w-full p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors touch-target"
+        <Button
+          variant="ghost"
+          className="justify-between w-full"
           aria-label={isExpanded ? "Collapse filters" : "Expand filters"}
         >
           <div className="flex items-center gap-2">
@@ -111,7 +112,7 @@ export function AnalyticsFilters({
           <ChevronUp
             className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "" : "rotate-180"}`}
           />
-        </button>
+        </Button>
       </CollapsibleTrigger>
       <CollapsibleContent>
         <div className="pt-3 space-y-3">

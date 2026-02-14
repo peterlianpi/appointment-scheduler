@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Search,
   MoreHorizontal,
@@ -218,11 +219,11 @@ export function UserList({
                       >
                         <TableCell>
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                              <span className="text-sm font-medium">
+                            <Avatar>
+                              <AvatarFallback className="bg-primary/10">
                                 {user.name?.charAt(0).toUpperCase() || "U"}
-                              </span>
-                            </div>
+                              </AvatarFallback>
+                            </Avatar>
                             <div>
                               <p className="font-medium">
                                 {user.name || "Unknown"}

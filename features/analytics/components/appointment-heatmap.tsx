@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
@@ -87,12 +88,14 @@ export function AppointmentHeatmap({
           <div className="text-center">
             <p className="text-muted-foreground text-sm">Failed to load data</p>
             {onRetry && (
-              <button
+              <Button
+                variant="link"
+                size="sm"
                 onClick={onRetry}
-                className="mt-2 text-sm text-primary hover:underline touch-target min-h-[44px] px-3"
+                className="mt-2"
               >
                 Try again
-              </button>
+              </Button>
             )}
           </div>
         </CardContent>
@@ -129,7 +132,9 @@ export function AppointmentHeatmap({
     <Card className="touch-target">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle className="text-base sm:text-lg">Weekly Heatmap</CardTitle>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => setIsExpanded(!isExpanded)}
           className="touch-target min-h-[44px] px-3 rounded-lg hover:bg-muted/50 transition-colors"
           aria-label={isExpanded ? "Collapse heatmap" : "Expand heatmap"}
@@ -139,7 +144,7 @@ export function AppointmentHeatmap({
           ) : (
             <ChevronDown className="h-4 w-4" />
           )}
-        </button>
+        </Button>
       </CardHeader>
       <Collapsible open={isExpanded}>
         <CollapsibleContent>
@@ -192,9 +197,11 @@ export function AppointmentHeatmap({
                         {HOURS.map((hour) => {
                           const count = row[hour.toString()] as number;
                           return (
-                            <button
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               key={hour}
-                              className={`aspect-square flex-1 rounded-sm transition-all hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${getHeatmapColor(
+                              className={`aspect-square flex-1 rounded-sm p-0 transition-all hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1 ${getHeatmapColor(
                                 count,
                                 maxCount,
                               )}`}
@@ -208,7 +215,7 @@ export function AppointmentHeatmap({
                                   </span>
                                 </div>
                               )}
-                            </button>
+                            </Button>
                           );
                         })}
                       </div>
