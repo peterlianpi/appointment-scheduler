@@ -172,15 +172,15 @@ export async function main() {
   console.log("🌱 Starting database seed...\n");
 
   // 1. Create superuser admin
-  const ADMIN_EMAIL = "peterpausianlian2020@gmail.com";
+  const ADMIN_EMAIL = "admin@demo.com";
   const admin = await prisma.user.upsert({
     where: { email: ADMIN_EMAIL },
     update: {
-      name: "Peter Pausian Lian",
+      name: "Admin Demo",
       role: "ADMIN",
       emailVerified: true,
     },
-    create: generateUser("Peter", "Pausian", "ADMIN"),
+    create: generateUser("Admin", "Demo", "ADMIN"),
   });
   console.log(`✅ Created admin: ${admin.email} (${admin.role})`);
 
